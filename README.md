@@ -1,35 +1,22 @@
-# slate_runner 🎬🐍
+# slate_runner
 RESTful FastAPI for fixing it in post.
 
-## Run service:
+## Run 
 ```bash
-# 1. Get Python 3.13+ first (https://www.python.org/downloads/)
-
-# 2. Clone the project
-git clone https://github.com/johnshields/slate_runner.git
-cd slate_runner
-
-# 3. Create a virtual environment
+# 1. Create a virtual environment
 python -m venv .venv
 
-# 4. Activate the venv
-source .venv/bin/activate        # macOS / Linux
-# .venv\Scripts\activate         # Windows PowerShell
+# 2. Activate the venv
+source .venv/bin/activate
 
-# 5. Install everything you need
+# 43 Install dependencies
 pip install -e ".[dev]"
 
-# 6. Start the app!
-slate run
-# OR use uvicorn directly:
-python -m uvicorn main:app --app-dir src
-# OR use FastAPI CLI:
+# 4. Start the app
 fastapi dev src/main.py
-fastapi run src/main.py
-# Type `slate --help` to see all available CLI commands.
 ```
 
-#### .env example:
+## .env Example
 ```dotenv
 # server
 LOG_LEVEL=info
@@ -46,6 +33,7 @@ DB_USER=postgres.project-ref
 DB_PASSWORD=hash
 ```
 
-#### SQL script located here [sql/001_schema.sql](works/sql/001_schema.sql)
+## SQL Schema
+`sql/001_schema.sql`
 
 ---
