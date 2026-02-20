@@ -4,13 +4,13 @@ RESTful FastAPI for fixing it in post.
 ## Run 
 ```bash
 # 1. Create a virtual environment
-python -m venv .venv
+python3 -m venv .venv
 
 # 2. Activate the venv
 source .venv/bin/activate
 
 # 43 Install dependencies
-pip install -e ".[dev]"
+pip install -r requirements.txt
 
 # 4. Start the app
 fastapi dev src/main.py

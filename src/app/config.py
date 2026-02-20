@@ -9,7 +9,7 @@ ROOT_DIR = Path.cwd()
 
 class Settings(BaseSettings):
     # Application configuration
-    SERVICE: str = "slate_runner_api"
+    SERVICE: str = "slaterunner_api"
     DESC: str = "RESTful FastAPI for fixing it in post."
     VERSION: str = "0.0.1"
     API_VERSION: str = "v1"

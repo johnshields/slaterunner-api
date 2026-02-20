@@ -1,4 +1,4 @@
-﻿body {
+body {
     font-family: 'JetBrains Mono', monospace;
     padding: 20px;
     background: #000;
@@ -9,17 +9,17 @@ a {
     color: #ff4d4d;
     text-decoration: none;
 }
+
 a:hover {
     text-decoration: underline;
     color: #ff6666;
 }
 
-/* Headers in cool red */
 h1, h2, h3 {
     color: #ff4d4d;
 }
 
-/* Title + badges */
+/* Header badges */
 .header-with-badges {
     display: flex;
     align-items: center;
@@ -29,7 +29,6 @@ h1, h2, h3 {
 .header-with-badges h1 {
     margin: 0;
 }
-
 .badges {
     display: flex;
     gap: 6px;
@@ -44,9 +43,9 @@ h1, h2, h3 {
     font-weight: bold;
 }
 
-/* JSON result container */
 .result {
     background: #1e1e1e;
+    color: #ff4d4d;
     padding: 14px;
     margin-top: 12px;
     border-radius: 6px;
@@ -58,13 +57,3 @@ h1, h2, h3 {
     line-height: 1.4;
     font-family: 'JetBrains Mono', monospace;
 }
-
-/* JSON syntax colors */
-.json-key     { color: #9CDCFE; }
-.json-string  { color: #CE9178; }
-.json-number  { color: #B5CEA8; }
-.json-boolean { color: #569CD6; }
-.json-null    { color: #808080; }
-
-/* Utility */
-.hidden-header { display: none; margin-top: 20px; }
