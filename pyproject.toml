@@ -3,20 +3,10 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "slate_runner_cli"
+name = "slaterunner_api"
 version = "0.1.0"
-description = "CLI for managing the slate_runner_api service"
+description = "RESTful FastAPI for fixing it in post"
 requires-python = ">=3.13"
-
-dependencies = [
-    "typer>=0.17.4",
-]
-
-[project.optional-dependencies]
-dev = ["python-dotenv>=1.1.1"]
-
-[project.scripts]
-slate = "slate:app"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
