@@ -1,12 +1,12 @@
-﻿from fastapi import APIRouter, Depends
-from .projects import router as projects
-from .assets import router as assets
-from .shots import router as shots
-from .tasks import router as tasks
-from .versions import router as versions
-from .publishes import router as publishes
-from .renders import router as renders
-from .events import router as events
+from fastapi import APIRouter, Depends
+from .pipeline.projects import router as projects
+from .pipeline.assets import router as assets
+from .pipeline.shots import router as shots
+from .pipeline.tasks import router as tasks
+from .pipeline.versions import router as versions
+from .pipeline.publishes import router as publishes
+from .pipeline.renders import router as renders
+from .pipeline.events import router as events
 from ..dependencies.auth import require_token
 
 router = APIRouter(dependencies=[Depends(require_token)])

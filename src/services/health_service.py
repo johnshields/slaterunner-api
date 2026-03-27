@@ -5,7 +5,7 @@ from db.db import engine
 from app.config import settings
 from app.logging_config import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class HealthChecker:
@@ -42,7 +42,7 @@ class HealthChecker:
                     "details": check_result
                 }
             except Exception as e:
-                logger.error(f"Health check '{check['name']}' failed: {e}")
+                logger.error("Health check '%s' failed: %s", check["name"], e)
                 results["checks"][check["name"]] = {
                     "status": "unhealthy",
                     "error": str(e)

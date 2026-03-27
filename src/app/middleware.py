@@ -5,7 +5,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.config import settings
 from app.logging_config import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 def _get_client_ip(request: Request) -> str:
@@ -52,7 +52,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # Verify client has not exceeded rate limit
         if len(self.requests[client_ip]) >= self.requests_per_minute:
-            logger.warning(f"Rate limit exceeded for IP: {client_ip}")
+            logger.warning("Rate limit exceeded for IP: %s", client_ip)
             raise HTTPException(
                 status_code=429,
                 detail={
@@ -104,15 +104,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         start_time = time.time()
 
         # Log incoming request
-        logger.info(
-            f"Request: {request.method} {request.url.path} from {request.client.host if request.client else 'unknown'}")
+        logger.info("Request: %s %s from %s", request.method, request.url.path, request.client.host if request.client else "unknown")
 
         # Process request and calculate timing
         response = await call_next(request)
 
         # Log response details
         process_time = time.time() - start_time
-        logger.info(f"Response: {response.status_code} in {process_time:.3f}s")
+        logger.info("Response: %s in %.3fs", response.status_code, process_time)
 
         # Include processing time in response headers
         response.headers["X-Process-Time"] = str(process_time)

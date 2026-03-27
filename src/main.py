@@ -11,33 +11,31 @@ from app.config import settings
 from api.routes.system import router as system_router
 from api.routes import router as api_router
 from db.db import engine
-from app.logging_config import setup_logging, get_logger
+from app.logging_config import get_logger
 from app.exceptions import handle_slate_runner_exception, SlateRunnerException
 from app.middleware import RateLimitMiddleware, SecurityHeadersMiddleware, RequestLoggingMiddleware
 
 
 @asynccontextmanager
 async def lifespan(api: FastAPI):
-    # Setup logging first
-    setup_logging()
-    logger = get_logger(__name__)
+    logger = get_logger()
 
     api.state.started_at = datetime.now(timezone.utc)
     api.state.settings = settings
-    logger.info(f"{settings.SERVICE} booting up...")
+    logger.info("%s booting up...", settings.SERVICE)
 
     # Get DB connection up and ready.
     try:
         with engine.connect() as conn:
             logger.info("database ready...")
     except Exception as e:
-        logger.error(f"database connection failed on startup: {e}")
+        logger.error("database connection failed on startup: %s", e)
 
     try:
         yield
     finally:
         engine.dispose()
-        logger.info(f"{settings.SERVICE} shutting down...")
+        logger.info("%s shutting down...", settings.SERVICE)
 
 
 # Init FastAPI
