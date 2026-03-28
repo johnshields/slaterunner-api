@@ -1,6 +1,8 @@
+DROP TABLE IF EXISTS events CASCADE;
+
 CREATE TABLE events (
     id          SERIAL PRIMARY KEY,
-    uid         TEXT UNIQUE          DEFAULT gen_uid('EVENT'),
+    uid         TEXT UNIQUE          DEFAULT gen_uid('EVN'),
     project_uid TEXT        NOT NULL REFERENCES projects (uid) ON DELETE CASCADE,
     kind        TEXT        NOT NULL,
     payload     JSONB       NOT NULL,

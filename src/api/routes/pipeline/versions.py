@@ -1,7 +1,5 @@
-﻿from fastapi import APIRouter, Query, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Query
 from typing import Optional
-from db.db import get_db
 from schemas.pagination import PaginatedResponse
 from schemas.response import ApiResponse
 import api.controllers.pipeline.version_controller as controller
@@ -13,30 +11,22 @@ router = APIRouter()
 @router.post("/versions", response_model=ApiResponse[schemas_version.VersionOut], status_code=201)
 def post_version(
         data: schemas_version.VersionCreate,
-        db: Session = Depends(get_db),
         publish: bool = Query(default=False, description="Also create an initial publish"),
 ):
     """Create a new Version with optional auto-generated Publish."""
-    return controller.create_version(db, data, publish=publish)
+    return controller.create_version(data, publish=publish)
 
 
 @router.patch("/versions/{uid}", response_model=ApiResponse[schemas_version.VersionOut])
-def patch_version(
-        uid: str,
-        data: schemas_version.VersionUpdate,
-        db: Session = Depends(get_db),
-):
+def patch_version(uid: str, data: schemas_version.VersionUpdate):
     """Update a Version by UID."""
-    return controller.update_version(db, uid, data)
+    return controller.update_version(uid, data)
 
 
 @router.delete("/versions/{uid}")
-def delete_version(
-        uid: str,
-        db: Session = Depends(get_db),
-):
+def delete_version(uid: str):
     """Delete a Version by UID."""
-    return controller.delete_version(db, uid)
+    return controller.delete_version(uid)
 
 
 @router.get("/versions", response_model=PaginatedResponse[schemas_version.VersionOut])
@@ -50,7 +40,6 @@ def get_versions(
         limit: int = Query(100, ge=1, le=500),
         offset: int = Query(0, ge=0),
         include_deleted: bool = Query(False, description="Include soft-deleted records"),
-        db: Session = Depends(get_db),
 ):
     """List or search Versions with optional filters (excludes soft-deleted by default)."""
-    return controller.list_versions(db, uid, project_uid, task_uid, vnum, status, created_by, limit, offset, include_deleted)
+    return controller.list_versions(uid, project_uid, task_uid, vnum, status, created_by, limit, offset, include_deleted)

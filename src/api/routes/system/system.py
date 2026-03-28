@@ -1,11 +1,9 @@
-﻿from fastapi import APIRouter, Request, Depends, HTTPException, Security
+from fastapi import APIRouter, Request, Depends, HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.orm import Session
 
 from api.controllers.system.system_controller import status_payload, db_conn
 from api.dependencies.auth import require_token
 from services.health_service import get_health_status
-from db.db import get_db
 
 router = APIRouter()
 bearer = HTTPBearer(auto_error=False)
@@ -24,10 +22,7 @@ def authz(auth=Depends(require_token)):
 
 
 @router.get("/healthz", summary="Liveness")
-def healthz(
-        db: Session = Depends(get_db),
-        credentials: HTTPAuthorizationCredentials = Security(bearer),
-):
+def healthz(credentials: HTTPAuthorizationCredentials = Security(bearer)):
     """
     Health endpoint.
     - If caller is authenticated -> return full health status
@@ -37,7 +32,7 @@ def healthz(
         return {"ok": True}
 
     try:
-        auth = require_token(credentials=credentials, db=db)
+        auth = require_token(credentials=credentials)
         if auth.get("user_authenticated"):
             return get_health_status()
     except HTTPException:

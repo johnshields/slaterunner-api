@@ -1,6 +1,8 @@
+DROP TABLE IF EXISTS assets CASCADE;
+
 CREATE TABLE assets (
     id          SERIAL PRIMARY KEY,
-    uid         TEXT UNIQUE          DEFAULT gen_uid('ASSET'),
+    uid         TEXT UNIQUE          DEFAULT gen_uid('AST'),
     project_uid TEXT        NOT NULL REFERENCES projects (uid) ON DELETE CASCADE,
     name        TEXT        NOT NULL,
     type        TEXT        NOT NULL,

@@ -1,6 +1,8 @@
+DROP TABLE IF EXISTS render_jobs CASCADE;
+
 CREATE TABLE render_jobs (
     id           SERIAL PRIMARY KEY,
-    uid          TEXT UNIQUE          DEFAULT gen_uid('RJ'),
+    uid          TEXT UNIQUE          DEFAULT gen_uid('RJB'),
     project_uid  TEXT        NOT NULL REFERENCES projects (uid) ON DELETE CASCADE,
     version_uid  TEXT        REFERENCES versions (uid) ON DELETE SET NULL,
     context      JSONB       NOT NULL,

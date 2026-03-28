@@ -1,113 +1,84 @@
-﻿from fastapi import HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import select, func
+from fastapi import HTTPException
 from typing import Optional
 from api.controllers.pipeline.task_controller import VERSION_DEFAULT_STATUS
-from models.pipeline.publish import Publish
-from models.pipeline.version import Version
-from models.pipeline.task import Task
-from models.pipeline.project import Project
+from clients.supabase import supabase
 from schemas.pipeline.version import VersionOut, VersionCreate, VersionUpdate
 from schemas.response import create_response
-from utils.database import db_lookup
+from utils.database import sb_lookup
 from utils.uid import generate_uid
-from utils.datetime_helpers import now_utc
 
 
-def create_version(
-        db: Session,
-        data: VersionCreate,
-        *,
-        publish: bool = False,
-        created_by: str | None = None,
-) -> VersionOut:
-    # Validate project and task exist
-    project = db_lookup(db, Project, data.project_uid)
-    task = db_lookup(db, Task, data.task_uid)
+def create_version(data: VersionCreate, *, publish: bool = False, created_by: str | None = None) -> VersionOut:
+    project = sb_lookup("projects", data.project_uid)
+    task = sb_lookup("tasks", data.task_uid, name_column=None)
 
     # Calculate next version number if not provided
     if data.vnum is None:
-        max_vnum = db.scalar(
-            select(func.max(Version.vnum)).where(Version.task_uid == task.uid)
+        max_result = (
+            supabase.table("versions")
+            .select("vnum")
+            .eq("task_uid", task["uid"])
+            .order("vnum", desc=True)
+            .limit(1)
+            .execute()
         )
-        vnum = (max_vnum or 0) + 1
+        vnum = (max_result.data[0]["vnum"] if max_result.data else 0) + 1
     else:
         vnum = data.vnum
 
-    version = Version(
-        uid=generate_uid("VER"),
-        project_uid=project.uid,
-        task_uid=task.uid,
-        vnum=vnum,
-        status=data.status or VERSION_DEFAULT_STATUS,
-        created_by=created_by,
-    )
+    ver_row = data.model_dump(include={"status"}, exclude_none=True)
+    ver_row.update({
+        "uid": generate_uid("VER"),
+        "project_uid": project["uid"],
+        "task_uid": task["uid"],
+        "vnum": vnum,
+        "created_by": created_by,
+    })
+    ver_row.setdefault("status", VERSION_DEFAULT_STATUS)
 
-    db.add(version)
-    db.flush()
+    result = supabase.table("versions").insert(ver_row).execute()
+    version = result.data[0]
 
     if publish:
-        publish = Publish(
-            uid=generate_uid("PUB"),
-            project_uid=project.uid,
-            version_uid=version.uid,
-            type=data.publish_type,
-            representation=data.representation,
-            path=data.path or "",
-            meta=data.meta or {},
-        )
-        db.add(publish)
-        db.flush()
+        pub_row = {
+            "uid": generate_uid("PUB"),
+            "project_uid": project["uid"],
+            "version_uid": version["uid"],
+            "type": data.publish_type,
+            "representation": data.representation,
+            "path": data.path or "",
+            "metadata": data.meta or {},
+        }
+        supabase.table("publishes").insert(pub_row).execute()
 
-    db.commit()
-    db.refresh(version)
     return create_response(version, "Version created successfully")
 
 
 # Update a version by UID
-def update_version(db: Session, uid: str, data: VersionUpdate) -> VersionOut:
-    # Locate version by UID
-    version = db_lookup(db, Version, uid)
+def update_version(uid: str, data: VersionUpdate) -> VersionOut:
+    version = sb_lookup("versions", uid, name_column=None)
+    updates = data.model_dump(exclude_none=True)
 
-    # Update project association if provided
-    if data.project_uid:
-        project = db.scalar(select(Project).where(Project.uid == data.project_uid))
-        if not project:
-            raise HTTPException(status_code=404, detail="Target project not found")
-        version.project_uid = project.uid
+    if "project_uid" in updates:
+        sb_lookup("projects", updates["project_uid"])
+    if "task_uid" in updates:
+        sb_lookup("tasks", updates["task_uid"], name_column=None)
 
-    # Update task association if provided
-    if data.task_uid:
-        task = db.scalar(select(Task).where(Task.uid == data.task_uid))
-        if not task:
-            raise HTTPException(status_code=404, detail="Target task not found")
-        version.task_uid = task.uid
+    if not updates:
+        return create_response(version, "Version updated successfully")
 
-    # Update other fields if provided
-    if data.status is not None:
-        version.status = data.status
-
-    if data.created_by is not None:
-        version.created_by = data.created_by
-
-    db.commit()
-    db.refresh(version)
-    return create_response(version, "Version updated successfully")
+    result = supabase.table("versions").update(updates).eq("uid", version["uid"]).execute()
+    return create_response(result.data[0], "Version updated successfully")
 
 
-def delete_version(db: Session, uid: str) -> dict:
-    version = db_lookup(db, Version, uid)
-    
-    # Soft delete: set deleted_at timestamp
-    version.deleted_at = now_utc()
-    
-    db.commit()
+def delete_version(uid: str) -> dict:
+    sb_lookup("versions", uid, name_column=None)
+    supabase.table("versions").update({"deleted_at": "now()"}).eq("uid", uid).execute()
     return create_response(None, f"Version '{uid}' deleted successfully")
 
 
 # Get a list of all versions, with optional filtering (excluding soft-deleted)
 def list_versions(
-        db: Session,
         uid: Optional[str] = None,
         project_uid: Optional[str] = None,
         task_uid: Optional[str] = None,
@@ -118,38 +89,30 @@ def list_versions(
         offset: int = 0,
         include_deleted: bool = False,
 ) -> dict:
-    # Build base query with filters
-    base_stmt = select(Version)
-    
-    # Exclude soft-deleted records by default
+    query = supabase.table("versions").select("*", count="exact")
+
     if not include_deleted:
-        base_stmt = base_stmt.where(Version.deleted_at.is_(None))
-
+        query = query.is_("deleted_at", "null")
     if uid:
-        base_stmt = base_stmt.where(Version.uid == uid)
+        query = query.eq("uid", uid)
     if project_uid:
-        base_stmt = base_stmt.where(Version.project_uid == project_uid)
+        query = query.eq("project_uid", project_uid)
     if task_uid:
-        base_stmt = base_stmt.where(Version.task_uid == task_uid)
+        query = query.eq("task_uid", task_uid)
     if vnum is not None:
-        base_stmt = base_stmt.where(Version.vnum == vnum)
+        query = query.eq("vnum", vnum)
     if status:
-        base_stmt = base_stmt.where(Version.status == status)
+        query = query.eq("status", status)
     if created_by:
-        base_stmt = base_stmt.where(Version.created_by == created_by)
+        query = query.eq("created_by", created_by)
 
-    # Get total count
-    count = db.scalar(select(func.count()).select_from(base_stmt.subquery()))
-    
-    # Get paginated items
-    stmt = base_stmt.order_by(Version.created_at.desc()).limit(limit).offset(offset)
-    data = db.scalars(stmt).all()
-    
+    result = query.order("created_at", desc=True).range(offset, offset + limit - 1).execute()
+
     return {
         "status": "success",
         "message": "Versions retrieved successfully",
-        "data": data,
-        "count": count,
+        "data": result.data,
+        "count": result.count or 0,
         "limit": limit,
-        "offset": offset
+        "offset": offset,
     }

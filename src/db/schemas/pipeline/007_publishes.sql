@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS publishes CASCADE;
+
 CREATE TABLE publishes (
     id             SERIAL PRIMARY KEY,
     uid            TEXT UNIQUE          DEFAULT gen_uid('PUB'),

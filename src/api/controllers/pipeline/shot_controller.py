@@ -1,105 +1,63 @@
-﻿from fastapi import HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import select, func
-from models.pipeline.shot import Shot
-from models.pipeline.project import Project
+from fastapi import HTTPException
 from typing import Optional
+from clients.supabase import supabase
 from schemas.pipeline.shot import ShotCreate, ShotUpdate, ShotOut
 from schemas.response import create_response
-from utils.database import db_lookup
+from utils.database import sb_lookup
 from utils.uid import generate_uid
-from utils.datetime_helpers import now_utc
 
 
 # Create a new shot, generate a UID if not provided.
-def create_shot(db: Session, data: ShotCreate) -> ShotOut:
-    # Validate project exists
-    project = db_lookup(db, Project, data.project_uid)
+def create_shot(data: ShotCreate) -> ShotOut:
+    sb_lookup("projects", data.project_uid)
 
-    # Validate shot is unique within project among non-deleted shots
-    existing = db.scalar(
-        select(Shot).where(
-            Shot.project_uid == data.project_uid,
-            Shot.seq == data.seq,
-            Shot.shot == data.shot,
-            Shot.deleted_at.is_(None)
-        )
+    existing = (
+        supabase.table("shots")
+        .select("uid")
+        .eq("project_uid", data.project_uid)
+        .eq("seq", data.seq)
+        .eq("shot", data.shot)
+        .is_("deleted_at", "null")
+        .limit(1)
+        .execute()
     )
-    if existing:
+    if existing.data:
         raise HTTPException(
             status_code=409,
-            detail=f"Shot '{data.seq}/{data.shot}' already exists in project '{data.project_uid}'."
+            detail=f"Shot '{data.seq}/{data.shot}' already exists in project '{data.project_uid}'.",
         )
 
-    # Create and persist shot
-    uid = data.uid or generate_uid("SHOT")
-    new_shot = Shot(
-        uid=uid,
-        project_uid=project.uid,
-        shot=data.shot,
-        seq=data.seq,
-        frame_in=data.frame_in,
-        frame_out=data.frame_out,
-        fps=data.fps,
-        colorspace=data.colorspace,
-    )
-    db.add(new_shot)
-    db.commit()
-    db.refresh(new_shot)
+    row = data.model_dump(exclude_none=True)
+    row["uid"] = row.get("uid") or generate_uid("SHT")
 
-    return create_response(new_shot, "Shot created successfully")
+    result = supabase.table("shots").insert(row).execute()
+    return create_response(result.data[0], "Shot created successfully")
 
 
 # Update a shot by UID
-def update_shot(db: Session, uid: str, data: ShotUpdate) -> ShotOut:
-    # Locate shot by UID
-    shot = db_lookup(db, Shot, uid)
+def update_shot(uid: str, data: ShotUpdate) -> ShotOut:
+    shot = sb_lookup("shots", uid, name_column=None)
+    updates = data.model_dump(exclude_none=True)
 
-    # Update project association if provided
-    if data.project_uid:
-        project = db.scalar(select(Project).where(Project.uid == data.project_uid))
-        if not project:
-            raise HTTPException(status_code=404, detail="Target project not found")
-        shot.project_uid = project.uid
+    if "project_uid" in updates:
+        sb_lookup("projects", updates["project_uid"])
 
-    # Update other fields if provided
-    if data.shot:
-        shot.shot = data.shot
+    if not updates:
+        return create_response(shot, "Shot updated successfully")
 
-    if data.seq:
-        shot.seq = data.seq
-
-    if data.frame_in:
-        shot.frame_in = data.frame_in
-
-    if data.frame_out:
-        shot.frame_out = data.frame_out
-
-    if data.fps:
-        shot.fps = data.fps
-
-    if data.colorspace:
-        shot.colorspace = data.colorspace
-
-    db.commit()
-    db.refresh(shot)
-    return create_response(shot, "Shot updated successfully")
+    result = supabase.table("shots").update(updates).eq("uid", shot["uid"]).execute()
+    return create_response(result.data[0], "Shot updated successfully")
 
 
 # Delete a shot by UID (soft delete)
-def delete_shot(db: Session, uid: str) -> dict:
-    shot = db_lookup(db, Shot, uid)
-    
-    # Soft delete: set deleted_at timestamp
-    shot.deleted_at = now_utc()
-    
-    db.commit()
+def delete_shot(uid: str) -> dict:
+    sb_lookup("shots", uid, name_column=None)
+    supabase.table("shots").update({"deleted_at": "now()"}).eq("uid", uid).execute()
     return create_response(None, f"Shot '{uid}' deleted successfully")
 
 
 # Get a list of shots, with optional filtering (excluding soft-deleted)
 def list_shots(
-        db: Session,
         uid: Optional[str] = None,
         project_uid: Optional[str] = None,
         shot: Optional[str] = None,
@@ -107,34 +65,24 @@ def list_shots(
         offset: int = 0,
         include_deleted: bool = False,
 ) -> dict:
-    # Build base query with filters
-    base_stmt = select(Shot)
-    
-    # Exclude soft-deleted records by default
+    query = supabase.table("shots").select("*", count="exact")
+
     if not include_deleted:
-        base_stmt = base_stmt.where(Shot.deleted_at.is_(None))
-
+        query = query.is_("deleted_at", "null")
     if uid:
-        base_stmt = base_stmt.where(Shot.uid == uid)
-
+        query = query.eq("uid", uid)
     if project_uid:
-        base_stmt = base_stmt.where(Shot.project_uid == project_uid)
-
+        query = query.eq("project_uid", project_uid)
     if shot:
-        base_stmt = base_stmt.where(Shot.shot.ilike(f"%{shot}%"))
+        query = query.ilike("shot", f"%{shot}%")
 
-    # Get total count
-    count = db.scalar(select(func.count()).select_from(base_stmt.subquery()))
-    
-    # Get paginated items
-    stmt = base_stmt.order_by(Shot.shot.asc()).limit(limit).offset(offset)
-    data = db.execute(stmt).scalars().all()
-    
+    result = query.order("shot").range(offset, offset + limit - 1).execute()
+
     return {
         "status": "success",
         "message": "Shots retrieved successfully",
-        "data": data,
-        "count": count,
+        "data": result.data,
+        "count": result.count or 0,
         "limit": limit,
-        "offset": offset
+        "offset": offset,
     }

@@ -1,4 +1,4 @@
-﻿import os
+import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from fastapi import FastAPI, Request
@@ -10,7 +10,6 @@ from starlette.templating import Jinja2Templates
 from app.config import settings
 from api.routes.system import router as system_router
 from api.routes import router as api_router
-from db.db import engine
 from app.logging_config import get_logger
 from app.exceptions import handle_slate_runner_exception, SlateRunnerException
 from app.middleware import RateLimitMiddleware, SecurityHeadersMiddleware, RequestLoggingMiddleware
@@ -24,17 +23,12 @@ async def lifespan(api: FastAPI):
     api.state.settings = settings
     logger.info("%s booting up...", settings.SERVICE)
 
-    # Get DB connection up and ready.
-    try:
-        with engine.connect() as conn:
-            logger.info("database ready...")
-    except Exception as e:
-        logger.error("database connection failed on startup: %s", e)
+    # Supabase client is initialised on import via clients/supabase.py
+    logger.info("database ready...")
 
     try:
         yield
     finally:
-        engine.dispose()
         logger.info("%s shutting down...", settings.SERVICE)
 
 

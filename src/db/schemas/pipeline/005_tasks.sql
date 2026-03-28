@@ -1,6 +1,8 @@
+DROP TABLE IF EXISTS tasks CASCADE;
+
 CREATE TABLE tasks (
     id          SERIAL PRIMARY KEY,
-    uid         TEXT UNIQUE          DEFAULT gen_uid('TASK'),
+    uid         TEXT UNIQUE          DEFAULT gen_uid('TSK'),
     project_uid TEXT        NOT NULL REFERENCES projects (uid) ON DELETE CASCADE,
     parent_type TEXT        NOT NULL CHECK (parent_type IN ('asset', 'shot')),
     parent_uid  TEXT        NOT NULL,

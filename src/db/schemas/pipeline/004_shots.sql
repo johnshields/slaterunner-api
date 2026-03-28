@@ -1,6 +1,8 @@
+DROP TABLE IF EXISTS shots CASCADE;
+
 CREATE TABLE shots (
     id          SERIAL PRIMARY KEY,
-    uid         TEXT UNIQUE            DEFAULT gen_uid('SHOT'),
+    uid         TEXT UNIQUE            DEFAULT gen_uid('SHT'),
     project_uid TEXT          NOT NULL REFERENCES projects (uid) ON DELETE CASCADE,
     seq         TEXT          NOT NULL,
     shot        TEXT          NOT NULL,

@@ -2,6 +2,7 @@
 works/*.txt
 works/*.md
 *.ps1
+temp/
 
 # Environments & config
 .env

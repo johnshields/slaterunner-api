@@ -1,8 +1,7 @@
-﻿from fastapi import FastAPI
+from fastapi import FastAPI
 from datetime import datetime, timezone
-from sqlalchemy import text
 from app.config import settings
-from db.db import engine
+from clients.supabase import supabase
 
 
 def status_payload(app: FastAPI) -> dict:
@@ -17,14 +16,13 @@ def status_payload(app: FastAPI) -> dict:
         "api_version": settings.API_VERSION,
         "uptime_seconds": int(uptime_seconds),
         "message": getattr(app, "description"),
-        "timestamp": now.isoformat()
+        "timestamp": now.isoformat(),
     }
 
 
 def db_conn() -> dict:
     try:
-        with engine.connect() as conn:
-            conn.execute(text("select 1"))
+        supabase.table("api_keys").select("id").limit(1).execute()
         return {"ok": True, "db": "ready"}
     except Exception as e:
         return {"ok": False, "db": f"error: {e.__class__.__name__}"}

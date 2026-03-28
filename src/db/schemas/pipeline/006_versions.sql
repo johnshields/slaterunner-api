@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS versions CASCADE;
+
 CREATE TABLE versions (
     id          SERIAL PRIMARY KEY,
     uid         TEXT UNIQUE          DEFAULT gen_uid('VER'),

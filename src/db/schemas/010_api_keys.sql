@@ -1,6 +1,8 @@
+DROP TABLE IF EXISTS api_keys CASCADE;
+
 CREATE TABLE api_keys (
     id          SERIAL PRIMARY KEY,
-    uid         TEXT UNIQUE DEFAULT gen_uid('APIK'),
+    uid         TEXT UNIQUE DEFAULT gen_uid('APK'),
     token       TEXT UNIQUE NOT NULL,
     description TEXT,
     role        TEXT NOT NULL CHECK (role IN (
