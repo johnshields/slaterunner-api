@@ -1,18 +1,3 @@
--- RLS for api_keys (admin only)
-ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
-ALTER TABLE api_keys FORCE ROW LEVEL SECURITY;
-
-CREATE POLICY api_keys_admin_policy ON api_keys
-  FOR ALL USING (
-    is_valid_api_token() AND (has_role('admin') OR EXISTS (
-      SELECT 1 FROM api_keys k WHERE k.token = current_setting('app.current_token', true) AND k.is_admin = true
-    ))
-  ) WITH CHECK (
-    is_valid_api_token() AND (has_role('admin') OR EXISTS (
-      SELECT 1 FROM api_keys k WHERE k.token = current_setting('app.current_token', true) AND k.is_admin = true
-    ))
-  );
-
 -- RLS for pipeline tables
 -- SELECT: all valid tokens, WRITE: role-restricted
 

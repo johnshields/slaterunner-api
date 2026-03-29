@@ -26,12 +26,9 @@ jobs:
       LOG_LEVEL: info
       PYTHONPATH: src
 
-      # Database config (from secrets)
-      DB_HOST: ${{ secrets.DB_HOST }}
-      DB_PORT: ${{ secrets.DB_PORT }}
-      DB_NAME: ${{ secrets.DB_NAME }}
-      DB_USER: ${{ secrets.DB_USER }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      # Supabase config (from secrets)
+      SUPABASE_PROJECT_URL: ${{ secrets.SUPABASE_PROJECT_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
 
       # Security (from secrets)
       SECRET_KEY: ${{ secrets.SECRET_KEY }}

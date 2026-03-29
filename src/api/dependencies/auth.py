@@ -1,8 +1,13 @@
+import hashlib
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from clients.supabase import supabase
 
 security = HTTPBearer()
+
+
+def hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
 
 
 def require_token(
@@ -13,9 +18,9 @@ def require_token(
     Returns a dict with authentication details.
     Raises 401 if token is invalid or missing.
     """
-    token = credentials.credentials
+    hashed = hash_token(credentials.credentials)
 
-    result = supabase.table("api_keys").select("*").eq("token", token).limit(1).execute()
+    result = supabase.table("api_keys").select("*").eq("token", hashed).limit(1).execute()
 
     if not result.data:
         raise HTTPException(
@@ -30,7 +35,7 @@ def require_token(
         "user_authenticated": True,
         "role": api_key["role"],
         "is_admin": api_key["is_admin"],
-        "has_token": bool(api_key["token"]),
+        "has_token": True,
         "expires_at": api_key["expires_at"],
     }
 
@@ -43,8 +48,9 @@ def is_authenticated(request: Request) -> dict:
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split(" ", 1)[1]
+        hashed = hash_token(token)
 
-        result = supabase.table("api_keys").select("*").eq("token", token).limit(1).execute()
+        result = supabase.table("api_keys").select("*").eq("token", hashed).limit(1).execute()
         if result.data:
             api_key = result.data[0]
             return {

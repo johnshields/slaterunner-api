@@ -1,4 +1,4 @@
--- Clear existing data
+-- Clear existing pipeline data (api_keys seeded in 010_api_keys.sql)
 TRUNCATE publishes, versions, tasks, shots, assets, projects, render_jobs, events RESTART IDENTITY CASCADE;
 
 -- Helper: generate a random timestamp within the past N days
@@ -8,18 +8,6 @@ BEGIN
   RETURN now() - (random() * (days || ' days')::interval);
 END;
 $$ LANGUAGE plpgsql;
-
--- API Keys (dev tokens)
-INSERT INTO api_keys (token, description, role, is_admin, expires_at) VALUES
-  ('dev-admin-token',      'Admin (full access)',         'admin',      true,  NULL),
-  ('dev-td-token',         'TD (pipeline full access)',   'td',         true,  NULL),
-  ('dev-atd-token',        'ATD (read-only)',             'atd',        false, NULL),
-  ('dev-artist-token',     'Artist (versions/publishes)', 'artist',     false, NULL),
-  ('dev-producer-token',   'Producer (read-only)',        'producer',   false, NULL),
-  ('dev-supervisor-token', 'Supervisor (approve tasks)',  'supervisor', false, NULL),
-  ('dev-service-token',    'Service (render farm)',       'service',    false, NULL),
-  ('dev-system-token',     'System (events/logging)',     'system',     false, NULL),
-  ('dev-client-token',     'Client (read-only)',          'client',     false, NULL);
 
 -- Projects
 INSERT INTO projects (uid, name) VALUES
