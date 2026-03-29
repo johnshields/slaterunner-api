@@ -23,14 +23,11 @@ LOG_LEVEL=info
 
 # auth
 API_USERNAME=admin
-API_TOKEN=secure_token
-SECRET_KEY=secure_secret_key
+ADMIN_API_TOKEN=secure_token
 
 # supabase 
-DB_HOST=aws-0-us-east-1.pooler.supabase.com  
-DB_NAME=postgres
-DB_USER=postgres.project-ref
-DB_PASSWORD=hash
+SUPABASE_PROJECT_URL=https://slaterunner.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
 ```
 
 ## SQL Schema
