@@ -30,7 +30,7 @@ SUPABASE_PROJECT_URL=https://slaterunner.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
 ```
 
-## SQL Schema
-`sql/001_schema.sql`
+## SQL Schemas
+`src/db/schemas/`
 
 ---
