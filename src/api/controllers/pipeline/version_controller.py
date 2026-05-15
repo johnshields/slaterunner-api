@@ -1,4 +1,3 @@
-from fastapi import HTTPException
 from typing import Optional
 from api.controllers.pipeline.task_controller import VERSION_DEFAULT_STATUS
 from clients.supabase import supabase

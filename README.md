@@ -1,36 +1,52 @@
-# slate_runner
-RESTful FastAPI for fixing it in post.
+# slaterunner
 
-## Run 
+> RESTful FastAPI for fixing it in post.
+
+slaterunner is a production pipeline API for managing VFX/animation projects, shots, assets, tasks, versions, renders, and publishes.
+
+## Stack
+
+- **API** - Python 3.13, FastAPI, Pydantic
+- **Database** - Supabase (Postgres + RLS)
+- **Auth** - Hashed API keys stored in DB
+- **Tooling** - Ruff, Black, Flake8, Pytest
+
+## API
+
+All routes under `/api/v1`, token-authenticated via `Authorization: Bearer <token>`.
+
+| Resource   | Endpoint              |
+|------------|-----------------------|
+| Projects   | `/projects`           |
+| Shots      | `/shots`              |
+| Assets     | `/assets`             |
+| Tasks      | `/tasks`              |
+| Versions   | `/versions`           |
+| Renders    | `/renders`            |
+| Publishes  | `/publishes`          |
+| Events     | `/events`             |
+
+System routes (health, info) live at `/api/system`.
+
+## Run
+
 ```bash
-# create a virtual environment
 python3 -m venv .venv
-
-# activate the venv
 source .venv/bin/activate
-
-# install dependencies
 pip install -r requirements.txt
-
-# start the app
 fastapi dev src/main.py
 ```
 
-## .env Example
+## .env
+
 ```dotenv
-# server
 LOG_LEVEL=info
-
-# auth
+ENVIRONMENT=development
 API_USERNAME=admin
-ADMIN_API_TOKEN=secure_token
-
-# supabase 
-SUPABASE_PROJECT_URL=https://slaterunner.supabase.co
-SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
+SUPABASE_PROJECT_URL=https://xxx.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_xxx
 ```
 
-## SQL Schemas
-`src/db/schemas/`
+## Licence
 
----
+MIT
