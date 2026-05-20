@@ -17,25 +17,14 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: sr_env
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     env:
       API_HOST: 127.0.0.1
       API_PORT: 8049
       LOG_LEVEL: info
       PYTHONPATH: src
-
-      # Supabase config (from secrets)
-      SUPABASE_PROJECT_URL: ${{ secrets.SUPABASE_PROJECT_URL }}
-      SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
-
-      # Security (from secrets)
-      SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      API_USERNAME: ${{ secrets.API_USERNAME }}
-      API_TOKEN: ${{ secrets.API_TOKEN }}
-
-      # Ensure CI-only flags are respected
+      DATABASE_PATH: slaterunner.db
       CI: true
 
     steps:
@@ -45,7 +34,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
           cache: "pip"
           cache-dependency-path: |
             requirements.txt
@@ -57,13 +46,11 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
-      - name: Lint (flake8 strict)
-        run: |
-          flake8 src --count --select=E9,F63,F7,F82 --show-source --statistics
+      - name: Lint (ruff)
+        run: ruff check src
 
-      - name: Lint (flake8 full)
-        run: |
-          flake8 src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Lint (flake8)
+        run: flake8 src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Start FastAPI (background)
         run: |
