@@ -2,6 +2,10 @@
 works/*.txt
 works/*.md
 *.ps1
+*.db
+*.db-wal
+*.db-shm
+seed_api_keys.sql
 temp/
 
 # Environments & config

@@ -1,8 +1,8 @@
 from typing import Optional
-from clients.supabase import supabase
+from clients.db import db
 from schemas.pipeline.render import RenderJobOut, RenderJobCreate, RenderJobUpdate
 from schemas.response import create_response
-from utils.database import sb_lookup
+from utils.database import db_lookup
 from utils.uid import generate_uid
 
 
@@ -16,7 +16,7 @@ def list_render_jobs(
         offset: int = 0,
         include_deleted: bool = False,
 ) -> dict:
-    query = supabase.table("render_jobs").select("*", count="exact")
+    query = db.table("render_jobs").select("*", count="exact")
 
     if not include_deleted:
         query = query.is_("deleted_at", "null")
@@ -43,29 +43,29 @@ def list_render_jobs(
 
 # Create a new render job
 def create_render_job(data: RenderJobCreate) -> RenderJobOut:
-    sb_lookup("projects", data.project_uid)
+    db_lookup("projects", data.project_uid)
 
     row = data.model_dump(exclude_none=True)
     row["uid"] = row.get("uid") or generate_uid("RJB")
 
-    result = supabase.table("render_jobs").insert(row).execute()
+    result = db.table("render_jobs").insert(row).execute()
     return create_response(result.data[0], "Render job created successfully")
 
 
 # Update a render job by UID
 def update_render_job(uid: str, data: RenderJobUpdate) -> RenderJobOut:
-    render_job = sb_lookup("render_jobs", uid, name_column=None)
+    render_job = db_lookup("render_jobs", uid, name_column=None)
     updates = data.model_dump(exclude_none=True)
 
     if not updates:
         return create_response(render_job, "Render job updated successfully")
 
-    result = supabase.table("render_jobs").update(updates).eq("uid", render_job["uid"]).execute()
+    result = db.table("render_jobs").update(updates).eq("uid", render_job["uid"]).execute()
     return create_response(result.data[0], "Render job updated successfully")
 
 
 # Delete a render job by UID (soft delete)
 def delete_render_job(uid: str) -> dict:
-    sb_lookup("render_jobs", uid, name_column=None)
-    supabase.table("render_jobs").update({"deleted_at": "now()"}).eq("uid", uid).execute()
+    db_lookup("render_jobs", uid, name_column=None)
+    db.table("render_jobs").update({"deleted_at": "now()"}).eq("uid", uid).execute()
     return create_response(None, f"Render job '{uid}' deleted successfully")

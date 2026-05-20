@@ -4,7 +4,6 @@ uvicorn[standard]>=0.35
 flake8>=7.3.0
 pydantic>=2.11.9
 pydantic-settings>=2.10.1
-supabase>=2.13.0
 pytest>=8.4.2
 ruff>=0.13.1
 black>=25.9.0

@@ -1,20 +1,20 @@
 from typing import Optional
 from api.controllers.pipeline.task_controller import VERSION_DEFAULT_STATUS
-from clients.supabase import supabase
+from clients.db import db
 from schemas.pipeline.version import VersionOut, VersionCreate, VersionUpdate
 from schemas.response import create_response
-from utils.database import sb_lookup
+from utils.database import db_lookup
 from utils.uid import generate_uid
 
 
 def create_version(data: VersionCreate, *, publish: bool = False, created_by: str | None = None) -> VersionOut:
-    project = sb_lookup("projects", data.project_uid)
-    task = sb_lookup("tasks", data.task_uid, name_column=None)
+    project = db_lookup("projects", data.project_uid)
+    task = db_lookup("tasks", data.task_uid, name_column=None)
 
     # Calculate next version number if not provided
     if data.vnum is None:
         max_result = (
-            supabase.table("versions")
+            db.table("versions")
             .select("vnum")
             .eq("task_uid", task["uid"])
             .order("vnum", desc=True)
@@ -35,7 +35,7 @@ def create_version(data: VersionCreate, *, publish: bool = False, created_by: st
     })
     ver_row.setdefault("status", VERSION_DEFAULT_STATUS)
 
-    result = supabase.table("versions").insert(ver_row).execute()
+    result = db.table("versions").insert(ver_row).execute()
     version = result.data[0]
 
     if publish:
@@ -48,31 +48,31 @@ def create_version(data: VersionCreate, *, publish: bool = False, created_by: st
             "path": data.path or "",
             "metadata": data.meta or {},
         }
-        supabase.table("publishes").insert(pub_row).execute()
+        db.table("publishes").insert(pub_row).execute()
 
     return create_response(version, "Version created successfully")
 
 
 # Update a version by UID
 def update_version(uid: str, data: VersionUpdate) -> VersionOut:
-    version = sb_lookup("versions", uid, name_column=None)
+    version = db_lookup("versions", uid, name_column=None)
     updates = data.model_dump(exclude_none=True)
 
     if "project_uid" in updates:
-        sb_lookup("projects", updates["project_uid"])
+        db_lookup("projects", updates["project_uid"])
     if "task_uid" in updates:
-        sb_lookup("tasks", updates["task_uid"], name_column=None)
+        db_lookup("tasks", updates["task_uid"], name_column=None)
 
     if not updates:
         return create_response(version, "Version updated successfully")
 
-    result = supabase.table("versions").update(updates).eq("uid", version["uid"]).execute()
+    result = db.table("versions").update(updates).eq("uid", version["uid"]).execute()
     return create_response(result.data[0], "Version updated successfully")
 
 
 def delete_version(uid: str) -> dict:
-    sb_lookup("versions", uid, name_column=None)
-    supabase.table("versions").update({"deleted_at": "now()"}).eq("uid", uid).execute()
+    db_lookup("versions", uid, name_column=None)
+    db.table("versions").update({"deleted_at": "now()"}).eq("uid", uid).execute()
     return create_response(None, f"Version '{uid}' deleted successfully")
 
 
@@ -88,7 +88,7 @@ def list_versions(
         offset: int = 0,
         include_deleted: bool = False,
 ) -> dict:
-    query = supabase.table("versions").select("*", count="exact")
+    query = db.table("versions").select("*", count="exact")
 
     if not include_deleted:
         query = query.is_("deleted_at", "null")

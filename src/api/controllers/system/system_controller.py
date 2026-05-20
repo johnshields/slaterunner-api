@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from datetime import datetime, timezone
 from app.config import settings
-from clients.supabase import supabase
+from clients.db import db
 
 
 def status_payload(app: FastAPI) -> dict:
@@ -22,7 +22,7 @@ def status_payload(app: FastAPI) -> dict:
 
 def db_conn() -> dict:
     try:
-        supabase.table("api_keys").select("id").limit(1).execute()
-        return {"ok": True, "db": "ready"}
+        db.ping()
+        return {"ok": True, "db": "sqlite"}
     except Exception as e:
         return {"ok": False, "db": f"error: {e.__class__.__name__}"}

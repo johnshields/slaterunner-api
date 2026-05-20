@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import Dict, Any, List
-from clients.supabase import supabase
+from clients.db import db
 from app.config import settings
 from app.logging_config import get_logger
 
@@ -54,8 +54,8 @@ class HealthChecker:
 
 def check_database() -> Dict[str, Any]:
     try:
-        supabase.table("api_keys").select("id").limit(1).execute()
-        return {"connected": True}
+        db.ping()
+        return {"connected": True, "engine": "sqlite"}
     except Exception as e:
         raise Exception(f"Database check failed: {e}")
 
@@ -98,9 +98,7 @@ def check_memory() -> Dict[str, Any]:
 def check_configuration() -> Dict[str, Any]:
     try:
         config_status = {
-            "supabase_configured": bool(
-                settings.SUPABASE_PROJECT_URL and settings.SUPABASE_PUBLISHABLE_KEY
-            ),
+            "database_path": settings.DATABASE_PATH,
             "environment": settings.ENVIRONMENT,
             "debug_mode": settings.DEBUG,
             "log_level": settings.LOG_LEVEL,

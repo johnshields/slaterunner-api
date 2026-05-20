@@ -1,18 +1,18 @@
 from fastapi import HTTPException
 from typing import Optional
-from clients.supabase import supabase
+from clients.db import db
 from schemas.pipeline.shot import ShotCreate, ShotUpdate, ShotOut
 from schemas.response import create_response
-from utils.database import sb_lookup
+from utils.database import db_lookup
 from utils.uid import generate_uid
 
 
 # Create a new shot, generate a UID if not provided.
 def create_shot(data: ShotCreate) -> ShotOut:
-    sb_lookup("projects", data.project_uid)
+    db_lookup("projects", data.project_uid)
 
     existing = (
-        supabase.table("shots")
+        db.table("shots")
         .select("uid")
         .eq("project_uid", data.project_uid)
         .eq("seq", data.seq)
@@ -30,29 +30,29 @@ def create_shot(data: ShotCreate) -> ShotOut:
     row = data.model_dump(exclude_none=True)
     row["uid"] = row.get("uid") or generate_uid("SHT")
 
-    result = supabase.table("shots").insert(row).execute()
+    result = db.table("shots").insert(row).execute()
     return create_response(result.data[0], "Shot created successfully")
 
 
 # Update a shot by UID
 def update_shot(uid: str, data: ShotUpdate) -> ShotOut:
-    shot = sb_lookup("shots", uid, name_column=None)
+    shot = db_lookup("shots", uid, name_column=None)
     updates = data.model_dump(exclude_none=True)
 
     if "project_uid" in updates:
-        sb_lookup("projects", updates["project_uid"])
+        db_lookup("projects", updates["project_uid"])
 
     if not updates:
         return create_response(shot, "Shot updated successfully")
 
-    result = supabase.table("shots").update(updates).eq("uid", shot["uid"]).execute()
+    result = db.table("shots").update(updates).eq("uid", shot["uid"]).execute()
     return create_response(result.data[0], "Shot updated successfully")
 
 
 # Delete a shot by UID (soft delete)
 def delete_shot(uid: str) -> dict:
-    sb_lookup("shots", uid, name_column=None)
-    supabase.table("shots").update({"deleted_at": "now()"}).eq("uid", uid).execute()
+    db_lookup("shots", uid, name_column=None)
+    db.table("shots").update({"deleted_at": "now()"}).eq("uid", uid).execute()
     return create_response(None, f"Shot '{uid}' deleted successfully")
 
 
@@ -65,7 +65,7 @@ def list_shots(
         offset: int = 0,
         include_deleted: bool = False,
 ) -> dict:
-    query = supabase.table("shots").select("*", count="exact")
+    query = db.table("shots").select("*", count="exact")
 
     if not include_deleted:
         query = query.is_("deleted_at", "null")

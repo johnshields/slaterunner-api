@@ -1,15 +1,15 @@
 from typing import Optional
-from clients.supabase import supabase
+from clients.db import db
 from schemas.pipeline.publish import PublishOut, PublishCreate, PublishUpdate
 from schemas.response import create_response
-from utils.database import sb_lookup
+from utils.database import db_lookup
 from utils.uid import generate_uid
 
 
 # Create a new publish
 def create_publish(data: PublishCreate) -> PublishOut:
-    sb_lookup("projects", data.project_uid)
-    sb_lookup("versions", data.version_uid, name_column=None)
+    db_lookup("projects", data.project_uid)
+    db_lookup("versions", data.version_uid, name_column=None)
 
     row = data.model_dump(exclude_none=True)
     row["uid"] = row.get("uid") or generate_uid("PUB")
@@ -17,13 +17,13 @@ def create_publish(data: PublishCreate) -> PublishOut:
     if "meta" in row:
         row["metadata"] = row.pop("meta")
 
-    result = supabase.table("publishes").insert(row).execute()
+    result = db.table("publishes").insert(row).execute()
     return create_response(result.data[0], "Publish created successfully")
 
 
 # Update a publish by UID
 def update_publish(uid: str, data: PublishUpdate) -> PublishOut:
-    publish = sb_lookup("publishes", uid, name_column=None)
+    publish = db_lookup("publishes", uid, name_column=None)
     updates = data.model_dump(exclude_none=True)
 
     # Schema uses "meta" but DB column is "metadata"
@@ -33,14 +33,14 @@ def update_publish(uid: str, data: PublishUpdate) -> PublishOut:
     if not updates:
         return create_response(publish, "Publish updated successfully")
 
-    result = supabase.table("publishes").update(updates).eq("uid", publish["uid"]).execute()
+    result = db.table("publishes").update(updates).eq("uid", publish["uid"]).execute()
     return create_response(result.data[0], "Publish updated successfully")
 
 
 # Delete a publish by UID (soft delete)
 def delete_publish(uid: str) -> dict:
-    sb_lookup("publishes", uid, name_column=None)
-    supabase.table("publishes").update({"deleted_at": "now()"}).eq("uid", uid).execute()
+    db_lookup("publishes", uid, name_column=None)
+    db.table("publishes").update({"deleted_at": "now()"}).eq("uid", uid).execute()
     return create_response(None, f"Publish '{uid}' deleted successfully")
 
 
@@ -56,7 +56,7 @@ def list_publishes(
         offset: int = 0,
         include_deleted: bool = False,
 ) -> dict:
-    query = supabase.table("publishes").select("*", count="exact")
+    query = db.table("publishes").select("*", count="exact")
 
     if not include_deleted:
         query = query.is_("deleted_at", "null")

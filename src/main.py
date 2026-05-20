@@ -13,6 +13,7 @@ from api.routes import router as api_router
 from app.logging_config import get_logger
 from app.exceptions import handle_slate_runner_exception, SlateRunnerException
 from app.middleware import RateLimitMiddleware, SecurityHeadersMiddleware, RequestLoggingMiddleware
+from clients.db import db
 
 
 @asynccontextmanager
@@ -23,12 +24,15 @@ async def lifespan(api: FastAPI):
     api.state.settings = settings
     logger.info("%s booting up...", settings.SERVICE)
 
-    # Supabase client is initialised on import via clients/supabase.py
+    db.connect()
+    db.init_schema()
+    db.seed()
     logger.info("database ready...")
 
     try:
         yield
     finally:
+        db.close()
         logger.info("%s shutting down...", settings.SERVICE)
 
 

@@ -1,7 +1,7 @@
 import hashlib
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from clients.supabase import supabase
+from clients.db import db
 
 security = HTTPBearer()
 
@@ -20,7 +20,7 @@ def require_token(
     """
     hashed = hash_token(credentials.credentials)
 
-    result = supabase.table("api_keys").select("*").eq("token", hashed).limit(1).execute()
+    result = db.table("api_keys").select("*").eq("token", hashed).limit(1).execute()
 
     if not result.data:
         raise HTTPException(
@@ -50,7 +50,7 @@ def is_authenticated(request: Request) -> dict:
         token = auth_header.split(" ", 1)[1]
         hashed = hash_token(token)
 
-        result = supabase.table("api_keys").select("*").eq("token", hashed).limit(1).execute()
+        result = db.table("api_keys").select("*").eq("token", hashed).limit(1).execute()
         if result.data:
             api_key = result.data[0]
             return {

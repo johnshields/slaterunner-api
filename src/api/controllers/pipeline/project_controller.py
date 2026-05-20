@@ -1,16 +1,16 @@
 from fastapi import HTTPException
 from typing import Optional
-from clients.supabase import supabase
+from clients.db import db
 from schemas.pipeline.project import ProjectOut, ProjectCreate, ProjectUpdate, ProjectOverviewOut
 from schemas.response import create_response
-from utils.database import sb_lookup
+from utils.database import db_lookup
 from utils.uid import generate_uid
 
 
 # Create a new project, generate a UID if not provided
 def create_project(data: ProjectCreate) -> ProjectOut:
     existing = (
-        supabase.table("projects")
+        db.table("projects")
         .select("uid")
         .eq("name", data.name)
         .is_("deleted_at", "null")
@@ -23,26 +23,26 @@ def create_project(data: ProjectCreate) -> ProjectOut:
     row = data.model_dump(exclude_none=True)
     row["uid"] = row.get("uid") or generate_uid("PRJ")
 
-    result = supabase.table("projects").insert(row).execute()
+    result = db.table("projects").insert(row).execute()
     return create_response(result.data[0], "Project created successfully")
 
 
 # Update a project by UID or name
 def update_project(identifier: str, data: ProjectUpdate) -> ProjectOut:
-    project = sb_lookup("projects", identifier)
+    project = db_lookup("projects", identifier)
     updates = data.model_dump(exclude_none=True)
 
     if not updates:
         return create_response(project, "Project updated successfully")
 
-    result = supabase.table("projects").update(updates).eq("uid", project["uid"]).execute()
+    result = db.table("projects").update(updates).eq("uid", project["uid"]).execute()
     return create_response(result.data[0], "Project updated successfully")
 
 
 # Delete a project by UID or name (soft delete)
 def delete_project(identifier: str) -> dict:
-    project = sb_lookup("projects", identifier)
-    supabase.table("projects").update({"deleted_at": "now()"}).eq("uid", project["uid"]).execute()
+    project = db_lookup("projects", identifier)
+    db.table("projects").update({"deleted_at": "now()"}).eq("uid", project["uid"]).execute()
     return create_response(None, f"Project '{identifier}' deleted successfully")
 
 
@@ -54,7 +54,7 @@ def list_projects(
         offset: int = 0,
         include_deleted: bool = False,
 ) -> dict:
-    query = supabase.table("projects").select("*", count="exact")
+    query = db.table("projects").select("*", count="exact")
 
     if not include_deleted:
         query = query.is_("deleted_at", "null")
@@ -77,11 +77,11 @@ def list_projects(
 
 # Get basic counts and info for a single project
 def list_project_overview(project_uid: str) -> ProjectOverviewOut:
-    project = sb_lookup("projects", project_uid)
+    project = db_lookup("projects", project_uid)
 
-    shots_count = supabase.table("shots").select("*", count="exact").eq("project_uid", project_uid).limit(0).execute()
+    shots_count = db.table("shots").select("*", count="exact").eq("project_uid", project_uid).limit(0).execute()
     tasks_count = (
-        supabase.table("tasks")
+        db.table("tasks")
         .select("*", count="exact")
         .eq("project_uid", project_uid)
         .eq("parent_type", "shot")
@@ -100,10 +100,10 @@ def list_project_overview(project_uid: str) -> ProjectOverviewOut:
 
 # Get all assets belonging to a project
 def list_project_assets(project_uid: str, limit: int = 50, offset: int = 0):
-    sb_lookup("projects", project_uid)
+    db_lookup("projects", project_uid)
 
     result = (
-        supabase.table("assets")
+        db.table("assets")
         .select("*", count="exact")
         .eq("project_uid", project_uid)
         .order("name")
@@ -130,9 +130,9 @@ def list_project_shots(
         limit: int = 50,
         offset: int = 0,
 ):
-    sb_lookup("projects", project_uid)
+    db_lookup("projects", project_uid)
 
-    query = supabase.table("shots").select("*", count="exact").eq("project_uid", project_uid)
+    query = db.table("shots").select("*", count="exact").eq("project_uid", project_uid)
 
     if seq:
         query = query.eq("seq", seq)
@@ -165,9 +165,9 @@ def list_project_tasks(
         limit: int = 50,
         offset: int = 0,
 ):
-    sb_lookup("projects", project_uid)
+    db_lookup("projects", project_uid)
 
-    query = supabase.table("tasks").select("*", count="exact").eq("project_uid", project_uid)
+    query = db.table("tasks").select("*", count="exact").eq("project_uid", project_uid)
 
     if parent_type:
         query = query.eq("parent_type", parent_type)
@@ -194,9 +194,9 @@ def list_project_publishes(
         limit: int = 50,
         offset: int = 0,
 ):
-    sb_lookup("projects", project_uid)
+    db_lookup("projects", project_uid)
 
-    query = supabase.table("publishes").select("*", count="exact").eq("project_uid", project_uid)
+    query = db.table("publishes").select("*", count="exact").eq("project_uid", project_uid)
 
     if type:
         query = query.eq("type", type)

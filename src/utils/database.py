@@ -1,13 +1,13 @@
 from fastapi import HTTPException
-from clients.supabase import supabase
+from clients.db import db
 
 
-def sb_lookup(table: str, identifier: str, *, name_column: str | None = "name") -> dict:
+def db_lookup(table: str, identifier: str, *, name_column: str | None = "name") -> dict:
     """Lookup a record by UID, falling back to name column if provided."""
-    result = supabase.table(table).select("*").eq("uid", identifier).limit(1).execute()
+    result = db.table(table).select().eq("uid", identifier).limit(1).execute()
 
     if not result.data and name_column:
-        result = supabase.table(table).select("*").eq(name_column, identifier).limit(1).execute()
+        result = db.table(table).select().eq(name_column, identifier).limit(1).execute()
 
     if not result.data:
         raise HTTPException(

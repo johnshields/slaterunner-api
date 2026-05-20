@@ -1,9 +1,9 @@
 from fastapi import HTTPException
 from typing import Optional
-from clients.supabase import supabase
+from clients.db import db
 from schemas.pipeline.task import TaskOut, TaskCreate, TaskUpdate
 from schemas.response import create_response
-from utils.database import sb_lookup
+from utils.database import db_lookup
 from utils.uid import generate_uid
 
 TASK_DEFAULT_STATUS = "WIP"
@@ -12,13 +12,13 @@ VERSION_DEFAULT_STATUS = "draft"
 
 # Create a new task, generate a UID if not provided, and auto-create Version v1.
 def create_task(data: TaskCreate, *, created_by: str | None = None) -> TaskOut:
-    sb_lookup("projects", data.project_uid)
+    db_lookup("projects", data.project_uid)
 
     row = data.model_dump(exclude_none=True)
     row["uid"] = row.get("uid") or generate_uid("TSK")
     row.setdefault("status", TASK_DEFAULT_STATUS)
 
-    result = supabase.table("tasks").insert(row).execute()
+    result = db.table("tasks").insert(row).execute()
     if not result.data:
         raise HTTPException(status_code=500, detail="Failed to create task")
 
@@ -33,30 +33,30 @@ def create_task(data: TaskCreate, *, created_by: str | None = None) -> TaskOut:
         "status": VERSION_DEFAULT_STATUS,
         "created_by": created_by or data.assignee,
     }
-    supabase.table("versions").insert(ver_row).execute()
+    db.table("versions").insert(ver_row).execute()
 
     return create_response(task, "Task created successfully")
 
 
 # Update a task by UID
 def update_task(uid: str, data: TaskUpdate) -> TaskOut:
-    task = sb_lookup("tasks", uid, name_column=None)
+    task = db_lookup("tasks", uid, name_column=None)
     updates = data.model_dump(exclude_none=True)
 
     if "project_uid" in updates:
-        sb_lookup("projects", updates["project_uid"])
+        db_lookup("projects", updates["project_uid"])
 
     if not updates:
         return create_response(task, "Task updated successfully")
 
-    result = supabase.table("tasks").update(updates).eq("uid", task["uid"]).execute()
+    result = db.table("tasks").update(updates).eq("uid", task["uid"]).execute()
     return create_response(result.data[0], "Task updated successfully")
 
 
 # Delete a task by UID (soft delete)
 def delete_task(uid: str) -> dict:
-    sb_lookup("tasks", uid, name_column=None)
-    supabase.table("tasks").update({"deleted_at": "now()"}).eq("uid", uid).execute()
+    db_lookup("tasks", uid, name_column=None)
+    db.table("tasks").update({"deleted_at": "now()"}).eq("uid", uid).execute()
     return create_response(None, f"Task '{uid}' deleted successfully")
 
 
@@ -73,7 +73,7 @@ def list_tasks(
         offset: int = 0,
         include_deleted: bool = False,
 ) -> dict:
-    query = supabase.table("tasks").select("*", count="exact")
+    query = db.table("tasks").select("*", count="exact")
 
     if not include_deleted:
         query = query.is_("deleted_at", "null")
@@ -105,10 +105,10 @@ def list_tasks(
 
 
 def list_task_versions(task_uid: str, limit: int = 50, offset: int = 0):
-    sb_lookup("tasks", task_uid, name_column=None)
+    db_lookup("tasks", task_uid, name_column=None)
 
     result = (
-        supabase.table("versions")
+        db.table("versions")
         .select("*", count="exact")
         .eq("task_uid", task_uid)
         .order("vnum", desc=True)

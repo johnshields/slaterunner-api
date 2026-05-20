@@ -19,9 +19,8 @@ class Settings(BaseSettings):
     ENVIRONMENT: Literal["development", "staging", "production"] = "development"
     DEBUG: bool = False
 
-    # Supabase client
-    SUPABASE_PROJECT_URL: str
-    SUPABASE_PUBLISHABLE_KEY: str
+    # Database
+    DATABASE_PATH: str = "slaterunner.db"
 
     # Authentication credentials
     API_USERNAME: str = "admin"

@@ -7,7 +7,7 @@ slaterunner is a production pipeline API for managing VFX/animation projects, sh
 ## Stack
 
 - **API** - Python 3.13, FastAPI, Pydantic
-- **Database** - Supabase (Postgres + RLS)
+- **Database** - SQLite (WAL mode, file-based)
 - **Auth** - Hashed API keys stored in DB
 - **Tooling** - Ruff, Black, Flake8, Pytest
 
@@ -42,9 +42,8 @@ fastapi dev src/main.py
 ```dotenv
 LOG_LEVEL=info
 ENVIRONMENT=development
+DATABASE_PATH=slaterunner.db
 API_USERNAME=admin
-SUPABASE_PROJECT_URL=https://xxx.supabase.co
-SUPABASE_PUBLISHABLE_KEY=sb_xxx
 ```
 
 ## Licence
