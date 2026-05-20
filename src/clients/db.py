@@ -1,9 +1,9 @@
 import json
 import sqlite3
-from datetime import datetime, timezone
 from pathlib import Path
 from app.config import settings
 from app.logging_config import get_logger
+from datetime import datetime, timezone
 
 logger = get_logger()
 
@@ -19,7 +19,7 @@ BOOL_COLUMNS = {"is_admin"}
 
 
 class QueryResult:
-    """Mimics Supabase execute() result."""
+    """Container for query execution results."""
 
     def __init__(self, data: list[dict], count: int | None = None):
         self.data = data
@@ -181,7 +181,7 @@ class QueryBuilder:
             sql += " ORDER BY " + ", ".join(self._order_clauses)
         if self._limit is not None:
             sql += f" LIMIT {self._limit}"
-            if self._offset:
+            if self._offset is not None:
                 sql += f" OFFSET {self._offset}"
 
         cursor.execute(sql, params)
@@ -194,10 +194,9 @@ class QueryBuilder:
         data.setdefault("updated_at", now)
 
         cols = list(data.keys())
-        sql = (
-            f'INSERT INTO "{self._table}" ({", ".join(f"{c}" for c in cols)}) '
-            f'VALUES ({", ".join(["?"] * len(cols))})'
-        )
+        col_names = ", ".join(f'"{c}"' for c in cols)
+        placeholders = ", ".join(["?"] * len(cols))
+        sql = f'INSERT INTO "{self._table}" ({col_names}) VALUES ({placeholders})'
         cursor.execute(sql, list(data.values()))
         self._conn.commit()
 
