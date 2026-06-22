@@ -1,19 +1,20 @@
 ﻿from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from enums.pipeline.publish_type import PublishType
 from enums.pipeline.representation import Representation
 
 
 class PublishOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
     uid: str
     project_uid: Optional[str] = None
     version_uid: Optional[str] = None
     type: Optional[PublishType] = None
     representation: Optional[Representation] = None
     path: str
-    meta: dict
+    # DB column is "metadata"; exposed as "meta" in the API contract
+    meta: dict = Field(validation_alias="metadata")
     created_at: datetime
     updated_at: datetime
 
