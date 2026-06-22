@@ -1,12 +1,11 @@
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
-from starlette.templating import Jinja2Templates
 from app.config import settings
 from api.routes.system import router as system_router
 from api.routes import router as api_router
@@ -57,22 +56,6 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "public"))
-
-    # Root endpoint
-    @api.get("/", response_class=HTMLResponse, tags=["root"])
-    def root(request: Request):
-        return templates.TemplateResponse(
-            "index.html",
-            {
-                "request": request,
-                "title": getattr(request.app, "title"),
-                "description": getattr(request.app, "description"),
-                "version": getattr(request.app, "version"),
-                "environment": settings.ENVIRONMENT
-            }
-        )
-
     # Favicon route
     @api.get("/favicon.ico", include_in_schema=False)
     def favicon():
@@ -103,6 +86,14 @@ def create_app() -> FastAPI:
     # Include API routes
     api.include_router(system_router, prefix="/api")
     api.include_router(api_router, prefix="/api/v1")
+
+    # Serve the built Vite backoffice console at root (FastAPI 0.138+ app.frontend()).
+    # Path operations (/api, /docs, /favicon.ico, /static) are matched first, so the
+    # SPA only handles paths the API does not. fallback="index.html" gives SPA routing.
+    # check_dir=False lets the app boot before the frontend has been built.
+    frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+    api.frontend("/", directory=frontend_dist, fallback="index.html", check_dir=False)
+
     return api
 
 

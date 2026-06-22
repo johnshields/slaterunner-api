@@ -32,6 +32,9 @@ env/
 env.bak/
 venv.bak/
 
+# Node / frontend
+node_modules/
+
 # Packaging / build
 dist/
 build/
