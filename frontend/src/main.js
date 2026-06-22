@@ -2,6 +2,7 @@ import "./style.css";
 import { RESOURCES, PAGE_SIZE } from "./config.js";
 import { esc, toast } from "./utils.js";
 import * as api from "./api.js";
+import { readState, writeState } from "./url.js";
 import { shellTemplate } from "./templates/shell.js";
 import { recordItemTemplate } from "./templates/record.js";
 import { detailTemplate, statusTemplate } from "./templates/detail.js";
@@ -10,6 +11,8 @@ import { detailTemplate, statusTemplate } from "./templates/detail.js";
  * SlateRunner console controller
  * Read-only browser over the /api/v1 pipeline resources, served by FastAPI
  * via app.frontend(). Status view integrates the public /api payload.
+ * View state is mirrored into the query string (see url.js) so refresh and
+ * shared links restore the same resource, record, tab and page.
  * Design language adapted from the hookblade inspector.
  */
 
@@ -19,7 +22,27 @@ const state = {
   count: 0,
   records: [],
   activeIndex: null,
+  view: "fields",
+  desiredUid: null,
 };
+
+/**
+ * Reflect current state into the URL.
+ */
+function syncUrl() {
+  writeState({
+    tab: state.resource,
+    uid: currentUid(),
+    view: state.view,
+    offset: state.offset,
+  });
+}
+
+function currentUid() {
+  if (state.resource === "status") return null;
+  const rec = state.records[state.activeIndex];
+  return (rec && rec.uid) || state.desiredUid || null;
+}
 
 /**
  * Shell render (once)
@@ -72,15 +95,21 @@ function saveToken() {
 
 /**
  * Navigation
+ * restore=true keeps the offset/uid carried in from the URL on boot;
+ * otherwise a fresh resource selection resets paging and selection.
  */
-function selectResource(key) {
+function selectResource(key, restore = false) {
   state.resource = key;
-  state.offset = 0;
-  state.activeIndex = null;
+  if (!restore) {
+    state.offset = 0;
+    state.desiredUid = null;
+    state.activeIndex = null;
+  }
   document.querySelectorAll(".nav-item").forEach((el) => {
     el.classList.toggle("active", el.dataset.key === key);
   });
   document.querySelector("#app").classList.toggle("status-view", key === "status");
+  syncUrl();
   loadCurrent();
 }
 
@@ -88,6 +117,7 @@ function changePage(direction) {
   const next = state.offset + direction * PAGE_SIZE;
   if (next < 0 || next >= state.count) return;
   state.offset = next;
+  state.desiredUid = null;
   loadList();
 }
 
@@ -134,6 +164,13 @@ async function loadList() {
       updatePager();
       return;
     }
+    if (!res.ok) {
+      listEl.innerHTML = "";
+      countEl.textContent = "0";
+      detail.innerHTML = `<div class="empty error">${res.status} ${esc(res.statusText)} on /api/v1/${esc(state.resource)}</div>`;
+      updatePager();
+      return;
+    }
     const json = await res.json();
     state.records = json.data || [];
     state.count = json.count ?? state.records.length;
@@ -164,7 +201,14 @@ function renderList() {
     el.addEventListener("click", () => selectRecord(Number(el.dataset.index)));
   });
 
-  selectRecord(0);
+  // Restore the record named in the URL, else fall back to the first
+  let index = 0;
+  if (state.desiredUid) {
+    const found = state.records.findIndex((r) => r.uid === state.desiredUid);
+    if (found >= 0) index = found;
+  }
+  state.desiredUid = null;
+  selectRecord(index);
 }
 
 function updatePager() {
@@ -178,22 +222,25 @@ function selectRecord(index) {
     el.classList.toggle("active", Number(el.dataset.index) === index);
   });
   renderDetail(state.records[index]);
+  syncUrl();
 }
 
 function renderDetail(rec) {
-  document.querySelector("#detail-pane").innerHTML = detailTemplate(rec);
+  document.querySelector("#detail-pane").innerHTML = detailTemplate(rec, state.view);
   document.querySelectorAll("#detail-pane .tab").forEach((tab) => {
     tab.addEventListener("click", () => switchTab(tab.dataset.tab));
   });
 }
 
 function switchTab(name) {
+  state.view = name;
   document.querySelectorAll("#detail-pane .tab").forEach((t) => {
     t.classList.toggle("active", t.dataset.tab === name);
   });
   document.querySelectorAll("#detail-pane .tab-content").forEach((c) => {
     c.classList.toggle("active", c.dataset.pane === name);
   });
+  syncUrl();
 }
 
 /**
@@ -214,9 +261,13 @@ async function syncBadges() {
 }
 
 /**
- * Boot
+ * Boot — restore view from the URL
  */
 renderShell();
-selectResource("status");
+const initial = readState();
+state.view = initial.view;
+state.offset = initial.offset;
+state.desiredUid = initial.uid;
+selectResource(initial.tab, true);
 syncBadges();
 setInterval(syncBadges, 30000);

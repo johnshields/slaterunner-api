@@ -12,12 +12,12 @@ export const PAGE_SIZE = 50;
  */
 export const RESOURCES = [
   { key: "status", label: "Status", synthetic: true },
-  { key: "projects", label: "Projects" },
-  { key: "assets", label: "Assets" },
-  { key: "shots", label: "Shots" },
-  { key: "tasks", label: "Tasks" },
-  { key: "versions", label: "Versions" },
-  { key: "publishes", label: "Publishes" },
-  { key: "renders", label: "Renders" },
-  { key: "events", label: "Events" },
+  { key: "projects", label: "Projects", uidParam: "project_uid" },
+  { key: "assets", label: "Assets", uidParam: "asset_uid" },
+  { key: "shots", label: "Shots", uidParam: "shot_uid" },
+  { key: "tasks", label: "Tasks", uidParam: "task_uid" },
+  { key: "versions", label: "Versions", uidParam: "version_uid" },
+  { key: "publishes", label: "Publishes", uidParam: "publish_uid" },
+  { key: "renders", label: "Renders", uidParam: "render_uid" },
+  { key: "events", label: "Events", uidParam: "event_uid" },
 ];
