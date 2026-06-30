@@ -1,73 +1,32 @@
-# Project-specific
-works/*.txt
-works/*.md
-*.ps1
+# Project
 *.db
 *.db-wal
 *.db-shm
 seed_api_keys.sql
 temp/
 
-# Environments & config
+# Environment
 .env
 .env.*
-alembic.ini
 
-# Python cache/compiled files
+# Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
-*.egg
 *.egg-info/
-.eggs/
-*.manifest
-*.spec
-
-# Virtual environments
 .venv/
 venv/
-ENV/
-env/
-env.bak/
-venv.bak/
 
-# Node / frontend
+# Node / build
 node_modules/
-
-# Packaging / build
 dist/
 build/
-develop-eggs/
-.installed.cfg
-pip-wheel-metadata/
 
-# Test / coverage
-.mypy_cache/
-.dmypy.json
+# Test
 .pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-test-results/
-reports/
 
-# Logs / temp files
+# Logs / editor / OS
 *.log
-*.tmp
-*.swp
-
-# IDE / editor
 .vscode/
 .idea/
-*.iml
-
-# OS-generated junk
+.claude/
 .DS_Store
-Thumbs.db
-Desktop.ini
-*~
-
-# Docker
-docker-compose.override.yml
-.dockerignore
