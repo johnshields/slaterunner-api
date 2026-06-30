@@ -29,7 +29,7 @@ const STATUS_TONE = {
   done: "success",
   running: "info",
   wip: "info",
-  ready: "info",
+  ready: "success",
   review: "warning",
   hold: "warning",
   failed: "danger",

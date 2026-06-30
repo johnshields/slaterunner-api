@@ -1,6 +1,6 @@
 import { api } from "./api.js";
 import { primaryLabel } from "./records.js";
-import { fieldsFromSchema } from "./ui/schema-fields.js";
+import { fieldsFromSchema } from "../ui/schema-fields.js";
 
 /**
  * Resource write config

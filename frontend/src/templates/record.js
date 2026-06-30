@@ -1,5 +1,5 @@
-import { esc } from "../utils.js";
-import { primaryLabel, secondaryLabel, statusPill } from "../records.js";
+import { esc } from "../lib/utils.js";
+import { primaryLabel, secondaryLabel, statusPill } from "../lib/records.js";
 
 /**
  * List + table templates

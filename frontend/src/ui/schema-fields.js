@@ -1,4 +1,4 @@
-import { RESOURCES } from "../config.js";
+import { RESOURCES } from "../lib/config.js";
 
 /**
  * OpenAPI -> form fields

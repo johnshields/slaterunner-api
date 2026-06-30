@@ -1,10 +1,10 @@
-import { RESOURCES, PAGE_SIZE } from "./config.js";
-import { esc } from "./utils.js";
+import { RESOURCES, PAGE_SIZE } from "./lib/config.js";
+import { esc } from "./lib/utils.js";
 import { toast, icons } from "./ui/dom.js";
-import { primaryLabel } from "./records.js";
-import { api } from "./api.js";
-import { readState, writeState } from "./url.js";
-import { RESOURCE_MODELS, WRITABLE, formDef, relationships } from "./forms.js";
+import { primaryLabel } from "./lib/records.js";
+import { api } from "./lib/api.js";
+import { readState, writeState } from "./lib/url.js";
+import { RESOURCE_MODELS, WRITABLE, formDef, relationships } from "./lib/forms.js";
 import { Modal } from "./ui/modal.js";
 import { ResourceForm } from "./ui/resource-form.js";
 import { shellTemplate } from "./templates/shell.js";
