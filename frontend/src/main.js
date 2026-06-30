@@ -188,7 +188,7 @@ async function loadList() {
   const listEl = document.querySelector("#record-list");
   listEl.innerHTML = '<div class="empty">Loading...</div>';
   try {
-    const res = await api.fetchResource(state.resource, PAGE_SIZE, state.offset);
+    const res = await api.list(state.resource, PAGE_SIZE, state.offset);
     if (res.status === 401) {
       return showListMessage('<div class="empty error">401 Unauthorized — token invalid or missing.</div>');
     }
@@ -363,8 +363,8 @@ async function submitProject(project) {
   if (!name) return modalError("Name is required.");
 
   const res = project
-    ? await api.updateProject(project.uid, { name })
-    : await api.createProject(name);
+    ? await api.update("projects", project.uid, { name })
+    : await api.create("projects", { name });
 
   if (!res.ok) return modalError(await writeError(res));
 
@@ -384,7 +384,7 @@ function confirmDelete(project) {
     })
   );
   document.querySelector("#modal-confirm").addEventListener("click", async () => {
-    const res = await api.deleteProject(project.uid);
+    const res = await api.remove("projects", project.uid);
     if (!res.ok) return modalError(await writeError(res));
     closeModal();
     toast("Project deleted");

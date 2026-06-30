@@ -2,9 +2,11 @@ import { TOKEN_KEY } from "./config.js";
 
 /**
  * API client
- * Token storage plus thin fetch wrappers. Returns raw Responses so the
- * controller stays in charge of status handling and DOM updates.
+ * Token storage, a shared request core, and generic resource CRUD keyed by
+ * name so every /api/v1/{resource} is reachable without per-resource code.
  */
+
+const BASE = "/api/v1";
 
 export function getToken() {
   return sessionStorage.getItem(TOKEN_KEY) || "";
@@ -18,60 +20,55 @@ export function setToken(value) {
   }
 }
 
-export function authHeaders() {
+function authHeaders() {
   const t = getToken();
   return t ? { Authorization: `Bearer ${t}` } : {};
 }
 
-export function fetchStatus() {
-  return fetch("/api", { redirect: "follow" }).then((res) => res.json());
-}
-
-export function fetchResource(resource, limit, offset) {
-  const url = `/api/v1/${resource}?limit=${limit}&offset=${offset}`;
-  return fetch(url, { headers: authHeaders(), redirect: "follow" });
+/**
+ * Shared request core. Returns the raw Response; callers own status handling.
+ * A body implies JSON; auth headers are attached unless explicitly disabled.
+ */
+function request(method, path, { body, auth = true } = {}) {
+  const headers = { ...(auth ? authHeaders() : {}) };
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  return fetch(path, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+    redirect: "follow",
+  });
 }
 
 /**
- * Validate a candidate token against an authenticated endpoint.
- * Resolves to the HTTP status (200 valid, 401 denied).
+ * Status / auth.
  */
+export function fetchStatus() {
+  return request("GET", "/api", { auth: false }).then((res) => res.json());
+}
+
 export function verifyToken(token) {
-  return fetch("/api/v1/projects?limit=1&offset=0", {
+  return fetch(`${BASE}/projects?limit=1&offset=0`, {
     headers: { Authorization: `Bearer ${token}` },
     redirect: "follow",
   }).then((res) => res.status);
 }
 
-function jsonHeaders() {
-  return { ...authHeaders(), "Content-Type": "application/json" };
-}
-
 /**
- * Project write operations.
+ * Generic resource CRUD (keyed by resource name).
  */
-export function createProject(name) {
-  return fetch("/api/v1/projects", {
-    method: "POST",
-    headers: jsonHeaders(),
-    body: JSON.stringify({ name }),
-    redirect: "follow",
-  });
+export function list(resource, limit, offset) {
+  return request("GET", `${BASE}/${resource}?limit=${limit}&offset=${offset}`);
 }
 
-export function updateProject(uid, body) {
-  return fetch(`/api/v1/projects/${encodeURIComponent(uid)}`, {
-    method: "PATCH",
-    headers: jsonHeaders(),
-    body: JSON.stringify(body),
-    redirect: "follow",
-  });
+export function create(resource, body) {
+  return request("POST", `${BASE}/${resource}`, { body });
 }
 
-export function deleteProject(uid) {
-  return fetch(`/api/v1/projects/${encodeURIComponent(uid)}`, {
-    method: "DELETE",
-    headers: authHeaders(),
-    redirect: "follow",
-  });
+export function update(resource, uid, body) {
+  return request("PATCH", `${BASE}/${resource}/${encodeURIComponent(uid)}`, { body });
+}
+
+export function remove(resource, uid) {
+  return request("DELETE", `${BASE}/${resource}/${encodeURIComponent(uid)}`);
 }
