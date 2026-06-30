@@ -7,6 +7,12 @@ import { shellTemplate } from "./templates/shell.js";
 import { gateTemplate } from "./templates/gate.js";
 import { recordItemTemplate } from "./templates/record.js";
 import { detailTemplate, statusTemplate } from "./templates/detail.js";
+import { modalTemplate, projectFormBody, confirmBody } from "./templates/modal.js";
+
+/**
+ * Resources that support write operations from the console.
+ */
+const WRITABLE = new Set(["projects"]);
 
 /**
  * SlateRunner console controller
@@ -65,6 +71,9 @@ function renderShell() {
 
   // Logout
   document.querySelector("#logout").addEventListener("click", logout);
+
+  // Create
+  document.querySelector("#create").addEventListener("click", () => openProjectForm(null));
 
   // Pagination + refresh
   document.querySelector("#page-prev").addEventListener("click", () => changePage(-1));
@@ -132,6 +141,7 @@ function selectResource(key, restore = false) {
     el.classList.toggle("active", el.dataset.key === key);
   });
   document.querySelector("#app").classList.toggle("status-view", key === "status");
+  document.querySelector("#create").hidden = !WRITABLE.has(key);
   syncUrl();
   loadCurrent();
 }
@@ -240,10 +250,16 @@ function selectRecord(index) {
 }
 
 function renderDetail(rec) {
-  document.querySelector("#detail-pane").innerHTML = detailTemplate(rec, state.view);
+  const writable = WRITABLE.has(state.resource);
+  document.querySelector("#detail-pane").innerHTML = detailTemplate(rec, state.view, writable);
+  icons();
   document.querySelectorAll("#detail-pane .tab").forEach((tab) => {
     tab.addEventListener("click", () => switchTab(tab.dataset.tab));
   });
+  if (writable) {
+    document.querySelector("#edit-record").addEventListener("click", () => openProjectForm(rec));
+    document.querySelector("#delete-record").addEventListener("click", () => confirmDelete(rec));
+  }
 }
 
 function switchTab(name) {
@@ -272,6 +288,108 @@ async function syncBadges() {
   } catch {
     document.querySelector("#uptime-badge").textContent = "Uptime: error";
   }
+}
+
+/**
+ * Modal infrastructure
+ */
+function openModal(html) {
+  closeModal();
+  const root = document.createElement("div");
+  root.id = "modal-root";
+  root.innerHTML = html;
+  document.body.appendChild(root);
+  icons();
+
+  const overlay = document.querySelector("#modal-overlay");
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeModal();
+  });
+  document.querySelector("#modal-close").addEventListener("click", closeModal);
+  document.querySelector("#modal-cancel").addEventListener("click", closeModal);
+  document.addEventListener("keydown", escClose);
+}
+
+function closeModal() {
+  document.removeEventListener("keydown", escClose);
+  document.querySelector("#modal-root")?.remove();
+}
+
+function escClose(e) {
+  if (e.key === "Escape") closeModal();
+}
+
+function modalError(message) {
+  const el = document.querySelector("#modal-error");
+  if (el) el.textContent = message;
+}
+
+async function writeError(res) {
+  if (res.status === 401) return "Unauthorized — token invalid.";
+  const data = await res.json().catch(() => null);
+  return data?.message || data?.detail || `Error ${res.status}`;
+}
+
+/**
+ * Reload the list after a write, reselecting the affected record.
+ */
+function reloadAfterWrite(uid) {
+  state.desiredUid = uid || null;
+  loadList();
+}
+
+/**
+ * Project create / edit / delete
+ */
+function openProjectForm(project) {
+  const editing = Boolean(project);
+  openModal(
+    modalTemplate({
+      title: editing ? "Edit project" : "New project",
+      body: projectFormBody(project),
+      confirmLabel: editing ? "Save" : "Create",
+    })
+  );
+  const input = document.querySelector("#field-name");
+  input.focus();
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") submitProject(project);
+  });
+  document.querySelector("#modal-confirm").addEventListener("click", () => submitProject(project));
+}
+
+async function submitProject(project) {
+  const name = document.querySelector("#field-name").value.trim();
+  if (!name) return modalError("Name is required.");
+
+  const res = project
+    ? await api.updateProject(project.uid, { name })
+    : await api.createProject(name);
+
+  if (!res.ok) return modalError(await writeError(res));
+
+  const json = await res.json().catch(() => null);
+  closeModal();
+  toast(project ? "Project updated" : "Project created");
+  reloadAfterWrite(project ? project.uid : json?.data?.uid);
+}
+
+function confirmDelete(project) {
+  openModal(
+    modalTemplate({
+      title: "Delete project",
+      body: confirmBody(`Delete "${project.name}"? This soft-deletes the project.`),
+      confirmLabel: "Delete",
+      danger: true,
+    })
+  );
+  document.querySelector("#modal-confirm").addEventListener("click", async () => {
+    const res = await api.deleteProject(project.uid);
+    if (!res.ok) return modalError(await writeError(res));
+    closeModal();
+    toast("Project deleted");
+    reloadAfterWrite(null);
+  });
 }
 
 /**

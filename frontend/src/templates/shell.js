@@ -19,6 +19,7 @@ export function shellTemplate() {
         <div class="list-header">
           <span id="list-count">--</span>
           <div class="list-actions">
+            <button class="btn-icon" id="create" title="New" hidden><i data-lucide="plus"></i></button>
             <button class="btn-icon" id="page-prev" title="Previous page"><i data-lucide="chevron-left"></i></button>
             <button class="btn-icon" id="page-next" title="Next page"><i data-lucide="chevron-right"></i></button>
             <button class="btn-icon" id="refresh" title="Refresh"><i data-lucide="refresh-cw"></i></button>

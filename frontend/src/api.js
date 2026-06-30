@@ -42,3 +42,36 @@ export function verifyToken(token) {
     redirect: "follow",
   }).then((res) => res.status);
 }
+
+function jsonHeaders() {
+  return { ...authHeaders(), "Content-Type": "application/json" };
+}
+
+/**
+ * Project write operations.
+ */
+export function createProject(name) {
+  return fetch("/api/v1/projects", {
+    method: "POST",
+    headers: jsonHeaders(),
+    body: JSON.stringify({ name }),
+    redirect: "follow",
+  });
+}
+
+export function updateProject(uid, body) {
+  return fetch(`/api/v1/projects/${encodeURIComponent(uid)}`, {
+    method: "PATCH",
+    headers: jsonHeaders(),
+    body: JSON.stringify(body),
+    redirect: "follow",
+  });
+}
+
+export function deleteProject(uid) {
+  return fetch(`/api/v1/projects/${encodeURIComponent(uid)}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+    redirect: "follow",
+  });
+}

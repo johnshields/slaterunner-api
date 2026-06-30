@@ -211,6 +211,7 @@ a:hover { text-decoration: underline; }
     font-size: 13px;
     color: var(--fg);
 }
+.detail-actions { margin-left: auto; display: flex; gap: 4px; }
 .tabs { display: flex; border-bottom: 1px solid var(--border); }
 .tab {
     padding: 8px 16px;
@@ -292,3 +293,75 @@ a:hover { text-decoration: underline; }
 
 /* Status view spans full width (no list pane) */
 .app.status-view .list-pane { display: none; }
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 1rem;
+}
+.modal {
+    width: 100%;
+    max-width: 380px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+}
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+}
+.modal-body { padding: 16px; }
+.modal-field { display: flex; flex-direction: column; gap: 6px; }
+.modal-field span { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--fg-muted); }
+.modal-field input {
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--fg);
+    font-family: var(--font);
+    font-size: 13px;
+    caret-color: var(--accent);
+}
+.modal-field input:focus { outline: none; border-color: var(--accent); }
+.modal-text { margin: 0; font-size: 13px; color: var(--fg); line-height: 1.5; }
+.modal-error { padding: 0 16px; min-height: 14px; color: var(--danger); font-size: 12px; }
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+}
+.modal-btn {
+    padding: 8px 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--fg);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.modal-btn:hover { background: var(--bg-hover); }
+.modal-btn-primary { color: var(--accent); border-color: var(--accent); }
+.modal-btn-primary:hover { background: var(--accent-light); }
+.modal-btn-danger { color: var(--danger); border-color: var(--danger); }
+.modal-btn-danger:hover { background: var(--danger-light); }

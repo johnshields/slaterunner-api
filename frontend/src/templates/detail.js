@@ -5,10 +5,16 @@ import { fieldsTable } from "./record.js";
  * Detail-pane templates
  */
 
-export function detailTemplate(rec, view = "fields") {
+export function detailTemplate(rec, view = "fields", actions = false) {
   const json = view === "json";
+  const actionBtns = actions
+    ? `<div class="detail-actions">
+        <button class="btn-icon" id="edit-record" title="Edit"><i data-lucide="pencil"></i></button>
+        <button class="btn-icon" id="delete-record" title="Delete"><i data-lucide="trash-2"></i></button>
+      </div>`
+    : "";
   return `
-    <div class="detail-header">${esc(primaryLabel(rec))}</div>
+    <div class="detail-header"><span>${esc(primaryLabel(rec))}</span>${actionBtns}</div>
     <div class="tabs">
       <button class="tab ${json ? "" : "active"}" data-tab="fields">Fields</button>
       <button class="tab ${json ? "active" : ""}" data-tab="json">JSON</button>
