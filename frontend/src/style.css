@@ -324,10 +324,13 @@ a:hover { text-decoration: underline; }
     font-weight: 700;
     color: var(--accent);
 }
-.modal-body { padding: 16px; }
+.modal-body { padding: 16px; max-height: 60vh; overflow-y: auto; }
+.modal-form { display: flex; flex-direction: column; gap: 12px; }
 .modal-field { display: flex; flex-direction: column; gap: 6px; }
 .modal-field span { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--fg-muted); }
-.modal-field input {
+.modal-field input,
+.modal-field select,
+.modal-field textarea {
     padding: 10px 12px;
     background: var(--bg);
     border: 1px solid var(--border);
@@ -337,7 +340,10 @@ a:hover { text-decoration: underline; }
     font-size: 13px;
     caret-color: var(--accent);
 }
-.modal-field input:focus { outline: none; border-color: var(--accent); }
+.modal-field textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+.modal-field input:focus,
+.modal-field select:focus,
+.modal-field textarea:focus { outline: none; border-color: var(--accent); }
 .modal-text { margin: 0; font-size: 13px; color: var(--fg); line-height: 1.5; }
 .modal-error { padding: 0 16px; min-height: 14px; color: var(--danger); font-size: 12px; }
 .modal-actions {

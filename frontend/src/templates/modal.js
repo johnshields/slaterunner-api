@@ -24,18 +24,6 @@ export function modalTemplate({ title, body, confirmLabel = "Save", danger = fal
   `;
 }
 
-/**
- * Project create/edit form body. Pre-fills name when editing.
- */
-export function projectFormBody(project) {
-  return `
-    <label class="modal-field">
-      <span>Name</span>
-      <input id="field-name" type="text" maxlength="100" autocomplete="off" value="${esc(project ? project.name : "")}" />
-    </label>
-  `;
-}
-
 export function confirmBody(text) {
   return `<p class="modal-text">${esc(text)}</p>`;
 }
