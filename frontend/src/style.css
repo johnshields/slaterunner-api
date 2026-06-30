@@ -250,6 +250,9 @@ a:hover { text-decoration: underline; }
     margin: 12px;
 }
 
+.code-wrap { position: relative; }
+.copy-btn { position: absolute; top: 18px; right: 22px; }
+
 /* JSON colours */
 .rk { color: var(--success); }
 .rv { color: #8cb4d4; }

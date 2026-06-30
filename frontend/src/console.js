@@ -125,6 +125,14 @@ export class Console {
     document.querySelector("#page-next").addEventListener("click", () => this.#changePage(1));
     document.querySelector("#refresh").addEventListener("click", () => this.#loadCurrent());
 
+    // Copy JSON (delegated; the detail pane is re-rendered on every selection)
+    document.querySelector("#detail-pane").addEventListener("click", (e) => {
+      const btn = e.target.closest(".copy-btn");
+      if (!btn) return;
+      navigator.clipboard.writeText(btn.parentElement.querySelector("pre").textContent);
+      toast("Copied");
+    });
+
     icons();
   }
 
@@ -169,6 +177,7 @@ export class Console {
     detail.innerHTML = '<div class="empty">Loading status...</div>';
     try {
       detail.innerHTML = statusTemplate(await api.status());
+      icons();
     } catch (err) {
       detail.innerHTML = `<div class="empty error">Failed to load /api<br>${esc(err.message)}</div>`;
     }
