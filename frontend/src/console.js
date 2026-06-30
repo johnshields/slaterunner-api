@@ -354,7 +354,7 @@ export class Console {
     const noun = RESOURCE_MODELS[this.#state.resource].noun;
     this.#modal.open({
       title: `Delete ${noun}`,
-      body: confirmBody(`Delete "${primaryLabel(record)}"? This soft-deletes the ${noun}.`),
+      body: confirmBody(`Delete "${primaryLabel(record)}"? It will be removed from the ${noun} list.`),
       confirmLabel: "Delete",
       danger: true,
       onConfirm: async () => {
