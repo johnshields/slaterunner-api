@@ -90,14 +90,13 @@ def create_app() -> FastAPI:
     api.include_router(system_router, prefix="/api")
     api.include_router(api_router, prefix="/api/v1")
 
-    # Serve the built Vite backoffice console at root (FastAPI 0.138+ app.frontend()).
-    # Path operations (/api, /docs, /favicon.ico, /static) are matched first, so the
-    # SPA only handles paths the API does not. fallback="index.html" gives SPA routing.
-    # check_dir=False lets the app boot before the frontend has been built.
-    # api/src/main.py -> repo root holds the sibling frontend/ directory
+    # Serve the built Vite console at root when present, else serve the API alone
     repo_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     frontend_dist = os.path.join(repo_root, "frontend", "dist")
-    api.frontend("/", directory=frontend_dist, fallback="index.html", check_dir=False)
+    if os.path.isdir(frontend_dist):
+        api.frontend("/", directory=frontend_dist, fallback="index.html")
+    else:
+        get_logger().warning("frontend build not found at %s; serving API only", frontend_dist)
 
     return api
 
