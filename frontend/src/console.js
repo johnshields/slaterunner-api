@@ -2,7 +2,7 @@ import { RESOURCES, PAGE_SIZE } from "./config.js";
 import { esc, toast, icons, primaryLabel } from "./utils.js";
 import { api } from "./api.js";
 import { readState, writeState } from "./url.js";
-import { RESOURCE_MODELS, WRITABLE, formDef } from "./forms.js";
+import { RESOURCE_MODELS, WRITABLE, formDef, relationships } from "./forms.js";
 import { Modal } from "./ui/modal.js";
 import { ResourceForm } from "./ui/resource-form.js";
 import { shellTemplate } from "./templates/shell.js";
@@ -33,6 +33,7 @@ export class Console {
 
   #modal = new Modal();
   #badgesStarted = false;
+  #children = {};
 
   /**
    * Boot — gate first, validate any stored token.
@@ -91,8 +92,9 @@ export class Console {
   /**
    * Console — render shell and restore view from the URL.
    */
-  #start() {
+  async #start() {
     this.#renderShell();
+    this.#children = await relationships().catch(() => ({}));
     const initial = readState();
     this.#state.view = initial.view;
     this.#state.offset = initial.offset;
@@ -260,15 +262,36 @@ export class Console {
 
   #renderDetail(rec) {
     const writable = WRITABLE.has(this.#state.resource);
-    document.querySelector("#detail-pane").innerHTML = detailTemplate(rec, this.#state.view, writable);
+    const children = this.#children[this.#state.resource] || [];
+    document.querySelector("#detail-pane").innerHTML = detailTemplate(rec, this.#state.view, writable, children.length > 0);
     icons();
     document.querySelectorAll("#detail-pane .tab").forEach((tab) => {
       tab.addEventListener("click", () => this.#switchTab(tab.dataset.tab));
     });
+    if (children.length) {
+      document.querySelector("#add-child").addEventListener("click", () => this.#chooseChild(rec, children));
+    }
     if (writable) {
       document.querySelector("#edit-record").addEventListener("click", () => this.#openForm(this.#state.resource, rec));
       document.querySelector("#delete-record").addEventListener("click", () => this.#confirmDelete(rec));
     }
+  }
+
+  /**
+   * Offer the child types that reference this record; opening one pre-fills the
+   * foreign key with the parent's uid.
+   */
+  #chooseChild(record, children) {
+    const body = `<div class="child-list">${children
+      .map((c) => `<button class="modal-btn child-opt" data-resource="${c.resource}" data-fk="${esc(c.fkKey)}">New ${esc(c.noun)}</button>`)
+      .join("")}</div>`;
+
+    this.#modal.open({ title: "Create related", body, footer: false });
+    this.#modal.body.querySelectorAll(".child-opt").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this.#openForm(btn.dataset.resource, null, { [btn.dataset.fk]: record.uid });
+      });
+    });
   }
 
   #switchTab(name) {
@@ -285,7 +308,7 @@ export class Console {
   /**
    * Resource CRUD
    */
-  async #openForm(resource, record) {
+  async #openForm(resource, record, prefill = null) {
     let def;
     try {
       def = await formDef(resource);
@@ -297,7 +320,7 @@ export class Console {
 
     this.#modal.open({
       title: `${editing ? "Edit" : "New"} ${form.noun}`,
-      body: form.render(record),
+      body: form.render(record || prefill),
       confirmLabel: editing ? "Save" : "Create",
       onConfirm: () => this.#submitForm(form, resource, record),
     });

@@ -374,3 +374,5 @@ a:hover { text-decoration: underline; }
 .modal-btn-primary:hover { background: var(--accent-light); }
 .modal-btn-danger { color: var(--danger); border-color: var(--danger); }
 .modal-btn-danger:hover { background: var(--danger-light); }
+.child-list { display: flex; flex-direction: column; gap: 8px; }
+.child-opt { width: 100%; text-align: left; text-transform: capitalize; }

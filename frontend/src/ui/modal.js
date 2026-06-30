@@ -11,12 +11,12 @@ export class Modal {
     if (e.key === "Escape") this.close();
   };
 
-  open({ title, body, confirmLabel, danger = false, onConfirm }) {
+  open({ title, body, confirmLabel, danger = false, footer = true, onConfirm }) {
     this.close();
 
     const root = document.createElement("div");
     root.id = "modal-root";
-    root.innerHTML = modalTemplate({ title, body, confirmLabel, danger });
+    root.innerHTML = modalTemplate({ title, body, confirmLabel, danger, footer });
     document.body.appendChild(root);
     icons();
 
@@ -25,8 +25,8 @@ export class Modal {
       if (e.target === overlay) this.close();
     });
     document.querySelector("#modal-close").addEventListener("click", () => this.close());
-    document.querySelector("#modal-cancel").addEventListener("click", () => this.close());
-    document.querySelector("#modal-confirm").addEventListener("click", () => onConfirm?.());
+    document.querySelector("#modal-cancel")?.addEventListener("click", () => this.close());
+    document.querySelector("#modal-confirm")?.addEventListener("click", () => onConfirm?.());
     document.addEventListener("keydown", this.#escHandler);
   }
 

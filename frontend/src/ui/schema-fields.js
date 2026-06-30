@@ -1,3 +1,5 @@
+import { RESOURCES } from "../config.js";
+
 /**
  * OpenAPI -> form fields
  * Translates a Create model from the API's OpenAPI document into the field
@@ -6,6 +8,14 @@
  */
 
 const UPPER = new Set(["uid", "id", "fps"]);
+
+/**
+ * Foreign-key fields: a property whose name is a resource's uid parameter
+ * (e.g. project_uid) becomes a select populated from that resource.
+ */
+const REF_RESOURCE = Object.fromEntries(
+  RESOURCES.filter((r) => r.uidParam).map((r) => [r.uidParam, r.key])
+);
 
 function humanize(key) {
   return key
@@ -59,6 +69,11 @@ export function fieldsFromSchema(openapi, modelName) {
         required: required.has(key),
       };
       if (resolved.enum) field.options = resolved.enum;
+      // Foreign key -> select populated from the referenced resource (filled in formDef)
+      if (!resolved.enum && REF_RESOURCE[key]) {
+        field.type = "select";
+        field.ref = REF_RESOURCE[key];
+      }
       if (prop.default !== undefined && prop.default !== null) field.default = prop.default;
       return field;
     });

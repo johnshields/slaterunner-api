@@ -18,7 +18,13 @@ const FIELD_TYPES = {
   select: {
     control: (f, v) => {
       const options = ['<option value="">—</option>']
-        .concat(f.options.map((o) => `<option value="${esc(o)}"${String(v) === o ? " selected" : ""}>${esc(o)}</option>`))
+        .concat(
+          (f.options || []).map((o) => {
+            const value = typeof o === "object" ? o.value : o;
+            const text = typeof o === "object" ? o.label : o;
+            return `<option value="${esc(value)}"${String(v) === String(value) ? " selected" : ""}>${esc(text)}</option>`;
+          })
+        )
         .join("");
       return `<select id="field-${f.key}">${options}</select>`;
     },

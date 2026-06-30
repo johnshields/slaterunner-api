@@ -5,7 +5,15 @@ import { esc } from "../utils.js";
  * Generic overlay + dialog, plus per-purpose body builders.
  */
 
-export function modalTemplate({ title, body, confirmLabel = "Save", danger = false }) {
+export function modalTemplate({ title, body, confirmLabel = "Save", danger = false, footer = true }) {
+  const foot = footer
+    ? `
+        <div class="modal-error" id="modal-error"></div>
+        <div class="modal-actions">
+          <button class="modal-btn" id="modal-cancel" type="button">Cancel</button>
+          <button class="modal-btn ${danger ? "modal-btn-danger" : "modal-btn-primary"}" id="modal-confirm" type="button">${esc(confirmLabel)}</button>
+        </div>`
+    : "";
   return `
     <div class="modal-overlay" id="modal-overlay">
       <div class="modal" role="dialog" aria-modal="true">
@@ -13,12 +21,7 @@ export function modalTemplate({ title, body, confirmLabel = "Save", danger = fal
           <span>${esc(title)}</span>
           <button class="btn-icon" id="modal-close" title="Close"><i data-lucide="x"></i></button>
         </div>
-        <div class="modal-body">${body}</div>
-        <div class="modal-error" id="modal-error"></div>
-        <div class="modal-actions">
-          <button class="modal-btn" id="modal-cancel" type="button">Cancel</button>
-          <button class="modal-btn ${danger ? "modal-btn-danger" : "modal-btn-primary"}" id="modal-confirm" type="button">${esc(confirmLabel)}</button>
-        </div>
+        <div class="modal-body">${body}</div>${foot}
       </div>
     </div>
   `;
