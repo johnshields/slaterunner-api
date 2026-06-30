@@ -1,4 +1,5 @@
-import { esc, colorJson, primaryLabel } from "../utils.js";
+import { esc, colorJson } from "../utils.js";
+import { primaryLabel } from "../records.js";
 import { fieldsTable } from "./record.js";
 
 /**

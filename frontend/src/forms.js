@@ -1,5 +1,5 @@
 import { api } from "./api.js";
-import { primaryLabel } from "./utils.js";
+import { primaryLabel } from "./records.js";
 import { fieldsFromSchema } from "./ui/schema-fields.js";
 
 /**

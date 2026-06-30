@@ -1,4 +1,4 @@
-import { icons } from "../utils.js";
+import { icons } from "./dom.js";
 import { modalTemplate } from "../templates/modal.js";
 
 /**

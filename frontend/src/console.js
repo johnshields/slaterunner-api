@@ -1,5 +1,7 @@
 import { RESOURCES, PAGE_SIZE } from "./config.js";
-import { esc, toast, icons, primaryLabel } from "./utils.js";
+import { esc } from "./utils.js";
+import { toast, icons } from "./ui/dom.js";
+import { primaryLabel } from "./records.js";
 import { api } from "./api.js";
 import { readState, writeState } from "./url.js";
 import { RESOURCE_MODELS, WRITABLE, formDef, relationships } from "./forms.js";

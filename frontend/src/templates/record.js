@@ -1,4 +1,5 @@
-import { esc, primaryLabel, secondaryLabel, statusPill } from "../utils.js";
+import { esc } from "../utils.js";
+import { primaryLabel, secondaryLabel, statusPill } from "../records.js";
 
 /**
  * List + table templates

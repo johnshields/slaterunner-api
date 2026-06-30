@@ -198,7 +198,12 @@ a:hover { text-decoration: underline; }
 .record-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
 .record-primary { font-size: 13px; color: var(--fg); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .record-secondary { font-size: 11px; color: var(--fg-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pill { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 600; background: var(--accent-light); color: var(--accent); margin-left: auto; }
+.pill { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 600; margin-left: auto; background: var(--bg-hover); color: var(--fg-muted); }
+.pill-success { background: var(--success-light); color: var(--success); }
+.pill-info { background: rgba(140, 180, 212, 0.15); color: #8cb4d4; }
+.pill-warning { background: rgba(232, 164, 92, 0.15); color: var(--warning); }
+.pill-danger { background: var(--danger-light); color: var(--danger); }
+.pill-neutral { background: var(--bg-hover); color: var(--fg-muted); }
 
 /* Detail pane */
 .detail-pane { flex: 1; overflow-y: auto; padding: 0; }
