@@ -10,6 +10,7 @@ from app.config import settings
 from api.routes.system import router as system_router
 from api.routes import router as api_router
 from app.logging_config import get_logger
+from app.dev_auth import ensure_dev_token
 from app.exceptions import handle_slate_runner_exception, SlateRunnerException
 from app.middleware import RateLimitMiddleware, SecurityHeadersMiddleware, RequestLoggingMiddleware
 from clients.db import db
@@ -27,6 +28,8 @@ async def lifespan(api: FastAPI):
     db.init_schema()
     db.seed()
     logger.info("database ready...")
+
+    ensure_dev_token(logger)
 
     try:
         yield
@@ -91,7 +94,9 @@ def create_app() -> FastAPI:
     # Path operations (/api, /docs, /favicon.ico, /static) are matched first, so the
     # SPA only handles paths the API does not. fallback="index.html" gives SPA routing.
     # check_dir=False lets the app boot before the frontend has been built.
-    frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+    # api/src/main.py -> repo root holds the sibling frontend/ directory
+    repo_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    frontend_dist = os.path.join(repo_root, "frontend", "dist")
     api.frontend("/", directory=frontend_dist, fallback="index.html", check_dir=False)
 
     return api

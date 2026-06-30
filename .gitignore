@@ -3,6 +3,7 @@
 *.db-wal
 *.db-shm
 seed_api_keys.sql
+.dev_token
 temp/
 
 # Environment

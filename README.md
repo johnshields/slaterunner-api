@@ -30,7 +30,10 @@ System routes (health, info) live at `/api/system`.
 
 ## Run
 
+The backend lives in `api/`; the Vite frontend is a sibling in `frontend/`.
+
 ```bash
+cd api
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
