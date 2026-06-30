@@ -51,4 +51,4 @@ API_USERNAME=admin
 
 ## Licence
 
-MIT
+MIT. See [LICENSE](LICENSE).
