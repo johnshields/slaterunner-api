@@ -1,9 +1,10 @@
 import "./style.css";
 import { RESOURCES, PAGE_SIZE } from "./config.js";
-import { esc, toast } from "./utils.js";
+import { esc, toast, icons } from "./utils.js";
 import * as api from "./api.js";
 import { readState, writeState } from "./url.js";
 import { shellTemplate } from "./templates/shell.js";
+import { gateTemplate } from "./templates/gate.js";
 import { recordItemTemplate } from "./templates/record.js";
 import { detailTemplate, statusTemplate } from "./templates/detail.js";
 
@@ -62,20 +63,8 @@ function renderShell() {
     el.addEventListener("click", () => selectResource(el.dataset.key));
   });
 
-  // Token field
-  const input = document.querySelector("#token-input");
-  input.value = api.getToken();
-  document.querySelector("#token-toggle").addEventListener("click", () => {
-    const btn = document.querySelector("#token-toggle");
-    const visible = input.type === "text";
-    input.type = visible ? "password" : "text";
-    btn.innerHTML = `<i data-lucide="${visible ? "eye" : "eye-off"}"></i>`;
-    if (window.lucide) lucide.createIcons({ nodes: [btn] });
-  });
-  document.querySelector("#token-save").addEventListener("click", saveToken);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") saveToken();
-  });
+  // Logout
+  document.querySelector("#logout").addEventListener("click", logout);
 
   // Pagination + refresh
   document.querySelector("#page-prev").addEventListener("click", () => changePage(-1));
@@ -83,14 +72,48 @@ function renderShell() {
   document.querySelector("#refresh").addEventListener("click", () => loadCurrent());
 
   // Render lucide icons in the static shell
-  if (window.lucide) lucide.createIcons();
+  icons();
 }
 
-function saveToken() {
-  const value = document.querySelector("#token-input").value.trim();
-  api.setToken(value);
-  toast(value ? "Token saved" : "Token cleared");
-  if (state.resource !== "status") loadCurrent();
+/**
+ * Login gate
+ */
+function renderGate() {
+  const app = document.querySelector("#app");
+  app.className = "app";
+  app.innerHTML = gateTemplate();
+  icons();
+
+  const input = document.querySelector("#gate-input");
+  document.querySelector("#gate-exec").addEventListener("click", login);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") login();
+  });
+  input.focus();
+}
+
+async function login() {
+  const input = document.querySelector("#gate-input");
+  const error = document.querySelector("#gate-error");
+  const value = input.value.trim();
+  if (!value) return;
+
+  const status = await api.verifyToken(value).catch(() => 0);
+  if (status === 200) {
+    api.setToken(value);
+    startConsole();
+    return;
+  }
+  error.textContent = status === 401 ? "Access denied" : "Connection error";
+  error.style.display = "block";
+  input.value = "";
+  input.focus();
+}
+
+function logout() {
+  api.setToken("");
+  toast("Locked");
+  renderGate();
 }
 
 /**
@@ -139,37 +162,28 @@ async function loadStatus() {
 }
 
 /**
+ * Clear the list and surface a message in the detail pane.
+ */
+function showListMessage(html) {
+  document.querySelector("#record-list").innerHTML = "";
+  document.querySelector("#list-count").textContent = "0";
+  document.querySelector("#detail-pane").innerHTML = html;
+  updatePager();
+}
+
+/**
  * Resource list (authenticated /api/v1/{resource})
  */
 async function loadList() {
   const listEl = document.querySelector("#record-list");
-  const countEl = document.querySelector("#list-count");
-  const detail = document.querySelector("#detail-pane");
-
-  if (!api.getToken()) {
-    listEl.innerHTML = "";
-    countEl.textContent = "0";
-    detail.innerHTML = '<div class="empty">Paste a Bearer token above to browse this resource.</div>';
-    updatePager();
-    return;
-  }
-
   listEl.innerHTML = '<div class="empty">Loading...</div>';
   try {
     const res = await api.fetchResource(state.resource, PAGE_SIZE, state.offset);
     if (res.status === 401) {
-      listEl.innerHTML = "";
-      countEl.textContent = "0";
-      detail.innerHTML = '<div class="empty error">401 Unauthorized — token invalid or missing.</div>';
-      updatePager();
-      return;
+      return showListMessage('<div class="empty error">401 Unauthorized — token invalid or missing.</div>');
     }
     if (!res.ok) {
-      listEl.innerHTML = "";
-      countEl.textContent = "0";
-      detail.innerHTML = `<div class="empty error">${res.status} ${esc(res.statusText)} on /api/v1/${esc(state.resource)}</div>`;
-      updatePager();
-      return;
+      return showListMessage(`<div class="empty error">${res.status} ${esc(res.statusText)} on /api/v1/${esc(state.resource)}</div>`);
     }
     const json = await res.json();
     state.records = json.data || [];
@@ -261,13 +275,34 @@ async function syncBadges() {
 }
 
 /**
- * Boot — restore view from the URL
+ * Console — render shell and restore view from the URL
  */
-renderShell();
-const initial = readState();
-state.view = initial.view;
-state.offset = initial.offset;
-state.desiredUid = initial.uid;
-selectResource(initial.tab, true);
-syncBadges();
-setInterval(syncBadges, 30000);
+let badgesStarted = false;
+function startConsole() {
+  renderShell();
+  const initial = readState();
+  state.view = initial.view;
+  state.offset = initial.offset;
+  state.desiredUid = initial.uid;
+  selectResource(initial.tab, true);
+  if (!badgesStarted) {
+    syncBadges();
+    setInterval(syncBadges, 30000);
+    badgesStarted = true;
+  }
+}
+
+/**
+ * Boot — gate first, validate any stored token
+ */
+async function boot() {
+  const stored = api.getToken();
+  if (stored && (await api.verifyToken(stored).catch(() => 0)) === 200) {
+    startConsole();
+  } else {
+    if (stored) api.setToken("");
+    renderGate();
+  }
+}
+
+boot();

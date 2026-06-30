@@ -40,6 +40,10 @@ export function statusPill(rec) {
   return v ? `<span class="pill">${esc(v)}</span>` : "";
 }
 
+export function icons() {
+  if (window.lucide) window.lucide.createIcons();
+}
+
 export function toast(message, type = "success") {
   const el = document.createElement("div");
   el.className = `toast toast-${type}`;

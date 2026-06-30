@@ -59,36 +59,72 @@ a:hover { text-decoration: underline; }
     font-weight: bold;
 }
 
-/* Token field */
-.token-field { position: relative; display: inline-flex; align-items: center; }
-.token-field input {
-    padding: 6px 56px 6px 10px;
+/* Login gate (mirrors fromlost admin login) */
+.login-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1rem;
+}
+.login-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    max-width: 340px;
+    padding: 28px 24px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+.login-card h1 {
+    margin: 0;
+    color: var(--accent);
+    font-size: 18px;
+    font-weight: 700;
+}
+.login-tagline {
+    margin: -8px 0 0;
+    color: var(--fg-muted);
+    font-size: 12px;
+}
+.login-card input {
+    width: 100%;
+    padding: 10px 12px;
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     color: var(--fg);
     font-family: var(--font);
-    font-size: 12px;
-    width: 240px;
+    font-size: 13px;
+    caret-color: var(--accent);
 }
-.token-field input:focus { outline: none; border-color: var(--accent); }
-.token-field .toggle, .token-field .save {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
+.login-card input:focus { outline: none; border-color: var(--accent); }
+.login-error { color: var(--danger); font-size: 12px; display: none; }
+
+/* Gate button (matches console button language) */
+.gate-exec {
+    display: inline-flex;
     align-items: center;
-    background: none;
-    border: none;
-    color: var(--fg-muted);
-    cursor: pointer;
-    padding: 2px 4px;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--accent);
     font-family: var(--font);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
 }
-.token-field .toggle { right: 34px; }
-.token-field .save { right: 6px; color: var(--accent); }
-.token-field .toggle:hover { color: var(--fg); }
-.token-field svg { width: 15px; height: 15px; display: block; }
+.gate-exec:hover { background: var(--bg-hover); border-color: var(--accent); }
+.gate-exec svg { width: 14px; height: 14px; }
 
 /* Body split: nav rail + list + detail */
 .body { display: flex; flex: 1; overflow: hidden; }

@@ -7,14 +7,14 @@ import { TOKEN_KEY } from "./config.js";
  */
 
 export function getToken() {
-  return localStorage.getItem(TOKEN_KEY) || "";
+  return sessionStorage.getItem(TOKEN_KEY) || "";
 }
 
 export function setToken(value) {
   if (value) {
-    localStorage.setItem(TOKEN_KEY, value);
+    sessionStorage.setItem(TOKEN_KEY, value);
   } else {
-    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
   }
 }
 
@@ -30,4 +30,15 @@ export function fetchStatus() {
 export function fetchResource(resource, limit, offset) {
   const url = `/api/v1/${resource}?limit=${limit}&offset=${offset}`;
   return fetch(url, { headers: authHeaders(), redirect: "follow" });
+}
+
+/**
+ * Validate a candidate token against an authenticated endpoint.
+ * Resolves to the HTTP status (200 valid, 401 denied).
+ */
+export function verifyToken(token) {
+  return fetch("/api/v1/projects?limit=1&offset=0", {
+    headers: { Authorization: `Bearer ${token}` },
+    redirect: "follow",
+  }).then((res) => res.status);
 }

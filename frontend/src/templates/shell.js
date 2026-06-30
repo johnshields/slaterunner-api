@@ -8,13 +8,9 @@ export function shellTemplate() {
     <div class="topbar">
       <span class="logo">SlateRunner</span>
       <div class="meta">
-        <div class="token-field">
-          <input id="token-input" type="password" placeholder="Bearer token" autocomplete="off" />
-          <button class="toggle" id="token-toggle" title="Show / hide"><i data-lucide="eye"></i></button>
-          <button class="save" id="token-save" title="Save token"><i data-lucide="save"></i></button>
-        </div>
         <span class="badge" id="version-badge">v--</span>
         <span class="badge" id="uptime-badge">Uptime: --</span>
+        <button class="btn-icon" id="logout" title="Lock"><i data-lucide="log-out"></i></button>
       </div>
     </div>
     <div class="body">
