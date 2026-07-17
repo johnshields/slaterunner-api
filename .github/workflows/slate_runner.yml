@@ -87,9 +87,15 @@ jobs:
         run: |
           set -e
           WORKER_URL="${{ secrets.SLATERUNNER_WORKER_URL }}"
+          WORKER_URL="${WORKER_URL%/}"
 
-          echo "GET /api ..."
-          STATUS=$(curl -sSL "$WORKER_URL/api")
+          echo "GET /api (retrying while the container provisions) ..."
+          for i in $(seq 1 12); do
+            STATUS=$(curl -sSL --max-time 30 "$WORKER_URL/api" || true)
+            echo "$STATUS" | grep -q '"ok":true' && break
+            echo "Attempt $i: not ready yet"
+            sleep 20
+          done
           echo "Response: $STATUS"
           echo "$STATUS" | grep -q '"ok":true' && echo "Status endpoint passed" || (echo "Unexpected response" && exit 1)
 
