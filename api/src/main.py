@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
 from app.config import settings
@@ -59,12 +59,6 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    # Favicon route
-    @api.get("/favicon.ico", include_in_schema=False)
-    def favicon():
-        file_path = os.path.join(os.path.dirname(__file__), "public", "static", "favicon.ico")
-        return FileResponse(file_path)
 
     # Mount all static files
     api.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "public", "static")), name="static")
