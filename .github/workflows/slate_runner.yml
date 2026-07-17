@@ -15,24 +15,13 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     defaults:
       run:
         working-directory: api
-
-    env:
-      API_HOST: 127.0.0.1
-      API_PORT: 8049
-      LOG_LEVEL: info
-      PYTHONPATH: src
-      ENVIRONMENT: staging
-      CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      D1_DATABASE_ID: bb4ace37-6594-464e-ae21-919ac48bd815
-      D1_API_TOKEN: ${{ secrets.D1_API_TOKEN }}
-      CI: true
 
     steps:
       - name: Checkout code
@@ -43,15 +32,12 @@ jobs:
         with:
           python-version: "3.13"
           cache: "pip"
-          cache-dependency-path: |
-            api/requirements.txt
-            api/requirements-dev.txt
+          cache-dependency-path: api/requirements.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          pip install -r requirements.txt
 
       - name: Lint (ruff)
         run: ruff check src
@@ -59,42 +45,23 @@ jobs:
       - name: Lint (flake8)
         run: flake8 src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-      - name: Start FastAPI (background)
-        run: |
-          python -m uvicorn main:app --app-dir src --host "$API_HOST" --port "$API_PORT" --log-level "$LOG_LEVEL" > uvicorn.log 2>&1 &
-          echo $! > uvicorn.pid
-          sleep 5
-          cat uvicorn.log || true
-
-      - name: Health check API
-        run: |
-          set -e
-          cat uvicorn.log || true
-          curl -fsS "http://$API_HOST:$API_PORT/api/healthz" || curl -fsS "http://$API_HOST:$API_PORT/"
-
-      - name: Run tests
-        run: |
-          pytest -q || echo "No tests or tests failed"
-
-      - name: Stop Uvicorn
-        if: always()
-        run: |
-          if [ -f uvicorn.pid ]; then
-            kill "$(cat uvicorn.pid)" || true
-            rm -f uvicorn.pid
-          fi
-
-      - name: Upload server logs (on failure)
-        if: failure()
-        uses: actions/upload-artifact@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
-          name: uvicorn-log
-          path: api/uvicorn.log
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: app/package-lock.json
+
+      - name: Build console
+        working-directory: app
+        run: |
+          npm ci
+          npm run build
 
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [build]
+    needs: [lint]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
@@ -108,3 +75,25 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4"
           workingDirectory: worker
+
+  smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [deploy]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Test /api status endpoint
+        run: |
+          set -e
+          WORKER_URL="${{ secrets.SLATERUNNER_WORKER_URL }}"
+
+          echo "GET /api ..."
+          STATUS=$(curl -sSL "$WORKER_URL/api")
+          echo "Response: $STATUS"
+          echo "$STATUS" | grep -q '"ok":true' && echo "Status endpoint passed" || (echo "Unexpected response" && exit 1)
+
+          echo "GET / (console) ..."
+          CODE=$(curl -sS -o /dev/null -w "%{http_code}" -L "$WORKER_URL/")
+          echo "HTTP $CODE"
+          [ "$CODE" = "200" ] && echo "Console passed" || (echo "Console not served" && exit 1)
