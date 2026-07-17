@@ -10,7 +10,7 @@ from app.config import settings
 from api.routes.system import router as system_router
 from api.routes import router as api_router
 from app.logging_config import get_logger
-from app.dev_auth import ensure_dev_token
+from app.dev_auth import ensure_dev_token, ensure_boot_token
 from app.exceptions import handle_slate_runner_exception, SlateRunnerException
 from app.middleware import RateLimitMiddleware, SecurityHeadersMiddleware, RequestLoggingMiddleware
 from clients.db import db
@@ -29,6 +29,7 @@ async def lifespan(api: FastAPI):
     db.seed()
     logger.info("database ready...")
 
+    ensure_boot_token(logger)
     ensure_dev_token(logger)
 
     try:
@@ -92,11 +93,11 @@ def create_app() -> FastAPI:
 
     # Serve the built Vite console at root when present, else serve the API alone
     repo_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    frontend_dist = os.path.join(repo_root, "frontend", "dist")
-    if os.path.isdir(frontend_dist):
-        api.frontend("/", directory=frontend_dist, fallback="index.html")
+    app_dist = os.path.join(repo_root, "app", "dist")
+    if os.path.isdir(app_dist):
+        api.frontend("/", directory=app_dist, fallback="index.html")
     else:
-        get_logger().warning("frontend build not found at %s; serving API only", frontend_dist)
+        get_logger().warning("app build not found at %s; serving API only", app_dist)
 
     return api
 

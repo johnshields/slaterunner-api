@@ -28,7 +28,10 @@ jobs:
       API_PORT: 8049
       LOG_LEVEL: info
       PYTHONPATH: src
-      DATABASE_PATH: slaterunner.db
+      ENVIRONMENT: staging
+      CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      D1_DATABASE_ID: bb4ace37-6594-464e-ae21-919ac48bd815
+      D1_API_TOKEN: ${{ secrets.D1_API_TOKEN }}
       CI: true
 
     steps:
@@ -87,3 +90,21 @@ jobs:
         with:
           name: uvicorn-log
           path: api/uvicorn.log
+
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy Worker + Container to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4"
+          workingDirectory: worker

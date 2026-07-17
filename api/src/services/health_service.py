@@ -55,7 +55,7 @@ class HealthChecker:
 def check_database() -> Dict[str, Any]:
     try:
         db.ping()
-        return {"connected": True, "engine": "sqlite"}
+        return {"connected": True, "engine": "d1"}
     except Exception as e:
         raise Exception(f"Database check failed: {e}")
 
@@ -98,7 +98,7 @@ def check_memory() -> Dict[str, Any]:
 def check_configuration() -> Dict[str, Any]:
     try:
         config_status = {
-            "database_path": settings.DATABASE_PATH,
+            "database": settings.D1_DATABASE_ID,
             "environment": settings.ENVIRONMENT,
             "debug_mode": settings.DEBUG,
             "log_level": settings.LOG_LEVEL,

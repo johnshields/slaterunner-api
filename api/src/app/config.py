@@ -19,14 +19,19 @@ class Settings(BaseSettings):
     ENVIRONMENT: Literal["development", "staging", "production"] = "development"
     DEBUG: bool = False
 
-    # Database
-    DATABASE_PATH: str = "slaterunner.db"
+    # Database (Cloudflare D1 — required)
+    CF_ACCOUNT_ID: Optional[str] = None
+    D1_DATABASE_ID: Optional[str] = None
+    D1_API_TOKEN: Optional[str] = None
 
     # Authentication credentials
     API_USERNAME: str = "admin"
     API_TOKEN: Optional[str] = "token"
     SECRET_KEY: Optional[str] = "secret"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
+    # Admin token installed on boot when provided (deployment secret)
+    BOOT_TOKEN: Optional[str] = None
 
     # Cross-origin resource sharing
     CORS_ORIGINS: list[str] = ["*"]
@@ -53,6 +58,10 @@ class Settings(BaseSettings):
 
     def is_production(self) -> bool:
         return self.ENVIRONMENT == "production"
+
+    @property
+    def d1_enabled(self) -> bool:
+        return bool(self.CF_ACCOUNT_ID and self.D1_DATABASE_ID and self.D1_API_TOKEN)
 
 
 settings = Settings()

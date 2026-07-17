@@ -21,6 +21,7 @@ venv/
 node_modules/
 dist/
 build/
+.wrangler/
 
 # Test
 .pytest_cache/

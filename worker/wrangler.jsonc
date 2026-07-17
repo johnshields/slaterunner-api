@@ -1,0 +1,49 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "slaterunner-api",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-05-01",
+	"containers": [
+		{
+			"class_name": "SlateRunnerContainer",
+			"image": "../Dockerfile",
+			"max_instances": 1,
+			"name": "slaterunner"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"class_name": "SlateRunnerContainer",
+				"name": "SLATERUNNER"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"SlateRunnerContainer"
+			]
+		}
+	],
+	"observability": {
+		"enabled": true,
+		"logs": {
+			"enabled": true,
+			"invocation_logs": true
+		}
+	},
+	"vars": {
+		"CF_ACCOUNT_ID": "55943fa5bdfb4a9e9006312216edd312",
+		"D1_DATABASE_ID": "bb4ace37-6594-464e-ae21-919ac48bd815"
+	},
+	"d1_databases": [
+		{
+			"binding": "slaterunner",
+			"database_name": "slaterunner",
+			"database_id": "bb4ace37-6594-464e-ae21-919ac48bd815",
+			"remote": true
+		}
+	]
+}

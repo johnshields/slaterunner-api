@@ -23,6 +23,6 @@ def status_payload(app: FastAPI) -> dict:
 def db_conn() -> dict:
     try:
         db.ping()
-        return {"ok": True, "db": "sqlite"}
+        return {"ok": True, "db": "d1"}
     except Exception as e:
         return {"ok": False, "db": f"error: {e.__class__.__name__}"}

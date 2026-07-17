@@ -1,6 +1,8 @@
 import json
-import sqlite3
 from pathlib import Path
+
+import httpx
+
 from app.config import settings
 from app.logging_config import get_logger
 from datetime import datetime, timezone
@@ -11,11 +13,57 @@ SCHEMA_PATH = Path(__file__).parent.parent / "db" / "schema.sql"
 SEED_PATH = Path(__file__).parent.parent / "db" / "seed.sql"
 SEED_API_KEYS_PATH = Path(__file__).parent.parent / "db" / "seed_api_keys.sql"
 
-# Columns stored as JSON text in SQLite
+# Columns stored as JSON text
 JSON_COLUMNS = {"metadata", "context", "payload"}
 
 # Columns stored as INTEGER but returned as bool
 BOOL_COLUMNS = {"is_admin"}
+
+
+class D1Backend:
+    """Cloudflare D1 executor over the REST API (SQL + params, same contract)."""
+
+    def __init__(self, account_id: str, database_id: str, api_token: str):
+        self._url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/d1/database/{database_id}/query"
+        self._client = httpx.Client(
+            headers={"Authorization": f"Bearer {api_token}"},
+            timeout=30,
+        )
+        logger.info("D1 connected (database %s)", database_id)
+
+    def _post(self, sql: str, params: list | None = None) -> list[dict]:
+        payload: dict = {"sql": sql}
+        if params:
+            payload["params"] = params
+        res = self._client.post(self._url, json=payload)
+        body = res.json()
+        if not body.get("success"):
+            raise RuntimeError(f"D1 query failed: {body.get('errors')}")
+        return body["result"]
+
+    def rows(self, sql: str, params: list) -> list[dict]:
+        result = self._post(sql, params)
+        return result[0].get("results", []) if result else []
+
+    def run(self, sql: str, params: list) -> int | None:
+        result = self._post(sql, params)
+        meta = result[-1].get("meta", {}) if result else {}
+        return meta.get("last_row_id")
+
+    def scalar(self, sql: str, params: list):
+        rows = self.rows(sql, params)
+        if not rows:
+            return None
+        return next(iter(rows[0].values()), None)
+
+    def script(self, sql_text: str):
+        self._post(sql_text)
+
+    def ping(self):
+        self._post("SELECT 1")
+
+    def close(self):
+        self._client.close()
 
 
 class QueryResult:
@@ -27,10 +75,10 @@ class QueryResult:
 
 
 class QueryBuilder:
-    """Lightweight SQLite query builder matching Supabase PostgREST patterns."""
+    """Lightweight query builder matching Supabase PostgREST patterns."""
 
-    def __init__(self, conn: sqlite3.Connection, table: str):
-        self._conn = conn
+    def __init__(self, backend, table: str):
+        self._backend = backend
         self._table = table
         self._operation = None
         self._filters: list[tuple[str, list]] = []
@@ -103,14 +151,12 @@ class QueryBuilder:
     # Execution
 
     def execute(self) -> QueryResult:
-        cursor = self._conn.cursor()
-
         if self._operation == "select":
-            return self._exec_select(cursor)
+            return self._exec_select()
         elif self._operation == "insert":
-            return self._exec_insert(cursor)
+            return self._exec_insert()
         elif self._operation == "update":
-            return self._exec_update(cursor)
+            return self._exec_update()
         else:
             raise ValueError("No operation specified on query builder")
 
@@ -126,7 +172,7 @@ class QueryBuilder:
         return " WHERE " + " AND ".join(clauses), params
 
     def _serialise(self, data: dict) -> dict:
-        """Prepare row data for SQLite: JSON columns and now() replacement."""
+        """Prepare row data for storage: JSON columns and now() replacement."""
         out = {}
         for k, v in data.items():
             if k in JSON_COLUMNS and isinstance(v, (dict, list)):
@@ -140,7 +186,7 @@ class QueryBuilder:
         return out
 
     def _deserialise(self, row: dict) -> dict:
-        """Parse JSON columns and booleans from SQLite row."""
+        """Parse JSON columns and booleans from a stored row."""
         for col in JSON_COLUMNS:
             if col in row and isinstance(row[col], str):
                 try:
@@ -152,28 +198,12 @@ class QueryBuilder:
                 row[col] = bool(row[col])
         return row
 
-    def _row_from_cursor(self, cursor) -> dict | None:
-        if not cursor.description:
-            return None
-        columns = [desc[0] for desc in cursor.description]
-        raw = cursor.fetchone()
-        if raw is None:
-            return None
-        return self._deserialise(dict(zip(columns, raw)))
-
-    def _rows_from_cursor(self, cursor) -> list[dict]:
-        if not cursor.description:
-            return []
-        columns = [desc[0] for desc in cursor.description]
-        return [self._deserialise(dict(zip(columns, r))) for r in cursor.fetchall()]
-
-    def _exec_select(self, cursor) -> QueryResult:
+    def _exec_select(self) -> QueryResult:
         where, params = self._build_where()
 
         total = None
         if self._count:
-            cursor.execute(f'SELECT COUNT(*) FROM "{self._table}"{where}', params)
-            total = cursor.fetchone()[0]
+            total = self._backend.scalar(f'SELECT COUNT(*) FROM "{self._table}"{where}', params)
 
         sql = f'SELECT * FROM "{self._table}"{where}'
 
@@ -184,10 +214,10 @@ class QueryBuilder:
             if self._offset is not None:
                 sql += f" OFFSET {self._offset}"
 
-        cursor.execute(sql, params)
-        return QueryResult(self._rows_from_cursor(cursor), count=total)
+        rows = [self._deserialise(r) for r in self._backend.rows(sql, params)]
+        return QueryResult(rows, count=total)
 
-    def _exec_insert(self, cursor) -> QueryResult:
+    def _exec_insert(self) -> QueryResult:
         data = self._serialise(self._insert_data)
         now = datetime.now(timezone.utc).isoformat()
         data.setdefault("created_at", now)
@@ -197,15 +227,12 @@ class QueryBuilder:
         col_names = ", ".join(f'"{c}"' for c in cols)
         placeholders = ", ".join(["?"] * len(cols))
         sql = f'INSERT INTO "{self._table}" ({col_names}) VALUES ({placeholders})'
-        cursor.execute(sql, list(data.values()))
-        self._conn.commit()
+        row_id = self._backend.run(sql, list(data.values()))
 
-        row_id = cursor.lastrowid
-        cursor.execute(f'SELECT * FROM "{self._table}" WHERE id = ?', [row_id])
-        row = self._row_from_cursor(cursor)
-        return QueryResult([row] if row else [])
+        rows = self._backend.rows(f'SELECT * FROM "{self._table}" WHERE id = ?', [row_id])
+        return QueryResult([self._deserialise(rows[0])] if rows else [])
 
-    def _exec_update(self, cursor) -> QueryResult:
+    def _exec_update(self) -> QueryResult:
         data = self._serialise(self._update_data)
         data["updated_at"] = datetime.now(timezone.utc).isoformat()
 
@@ -213,60 +240,54 @@ class QueryBuilder:
         set_clause = ", ".join(f'"{k}" = ?' for k in data.keys())
         params = list(data.values()) + where_params
 
-        cursor.execute(f'UPDATE "{self._table}" SET {set_clause}{where}', params)
-        self._conn.commit()
+        self._backend.run(f'UPDATE "{self._table}" SET {set_clause}{where}', params)
 
-        cursor.execute(f'SELECT * FROM "{self._table}"{where}', where_params)
-        return QueryResult(self._rows_from_cursor(cursor))
+        rows = [self._deserialise(r) for r in self._backend.rows(f'SELECT * FROM "{self._table}"{where}', where_params)]
+        return QueryResult(rows)
 
 
 class Database:
-    """SQLite database client for slaterunner."""
+    """Cloudflare D1 database client for slaterunner."""
 
     def __init__(self):
-        self._conn: sqlite3.Connection | None = None
+        self._backend = None
 
-    def connect(self, db_path: str | None = None):
-        path = db_path or settings.DATABASE_PATH
-        self._conn = sqlite3.connect(path, check_same_thread=False)
-        self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute("PRAGMA foreign_keys=ON")
-        logger.info("SQLite connected to %s", path)
+    def connect(self):
+        if not settings.d1_enabled:
+            raise RuntimeError(
+                "D1 credentials missing — set CF_ACCOUNT_ID, D1_DATABASE_ID and D1_API_TOKEN"
+            )
+        self._backend = D1Backend(settings.CF_ACCOUNT_ID, settings.D1_DATABASE_ID, settings.D1_API_TOKEN)
 
     def init_schema(self):
         """Create tables if they do not exist."""
         if SCHEMA_PATH.exists():
-            self._conn.executescript(SCHEMA_PATH.read_text())
-            self._conn.commit()
+            self._backend.script(SCHEMA_PATH.read_text())
             logger.info("database schema initialised")
 
     def seed(self):
         """Insert seed data if database is empty."""
-        cursor = self._conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM projects")
-        if cursor.fetchone()[0] == 0 and SEED_PATH.exists():
-            self._conn.executescript(SEED_PATH.read_text())
-            self._conn.commit()
+        if self._backend.scalar("SELECT COUNT(*) FROM projects", []) == 0 and SEED_PATH.exists():
+            self._backend.script(SEED_PATH.read_text())
             logger.info("seed data inserted")
 
         if SEED_API_KEYS_PATH.exists():
-            self._conn.executescript(SEED_API_KEYS_PATH.read_text())
-            self._conn.commit()
+            self._backend.script(SEED_API_KEYS_PATH.read_text())
             logger.info("API keys seeded")
 
     def table(self, name: str) -> QueryBuilder:
-        if not self._conn:
+        if not self._backend:
             raise RuntimeError("Database not connected — call db.connect() first")
-        return QueryBuilder(self._conn, name)
+        return QueryBuilder(self._backend, name)
 
     def ping(self):
         """Health check."""
-        self._conn.execute("SELECT 1")
+        self._backend.ping()
 
     def close(self):
-        if self._conn:
-            self._conn.close()
-            self._conn = None
+        if self._backend:
+            self._backend.close()
+            self._backend = None
 
 
 db = Database()
