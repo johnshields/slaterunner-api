@@ -5,11 +5,11 @@ from api.controllers.system.system_controller import status_payload, db_conn
 from api.dependencies.auth import require_token
 from services.health_service import get_health_status
 
-router = APIRouter()
+router = APIRouter(tags=["system"])
 bearer = HTTPBearer(auto_error=False)
 
 
-@router.get("/", summary="API status / load balancer check")
+@router.get("", summary="API status / load balancer check")
 def api_root(request: Request):
     """Endpoint for LBs / uptime checks."""
     return status_payload(request.app)

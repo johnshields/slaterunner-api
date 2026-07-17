@@ -1,5 +1,3 @@
-﻿from fastapi import APIRouter
-from .system import router as system_routes
+﻿from .system import router
 
-router = APIRouter()
-router.include_router(system_routes, tags=["system"])
+__all__ = ["router"]
