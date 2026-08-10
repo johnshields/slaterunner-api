@@ -1,5 +1,5 @@
 
-from clients.db import db
+from db import db
 from schemas.pipeline.render import RenderJobCreate, RenderJobOut, RenderJobUpdate
 from schemas.response import create_response
 from utils.database import db_lookup

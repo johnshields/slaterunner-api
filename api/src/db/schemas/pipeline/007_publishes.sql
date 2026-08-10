@@ -1,19 +1,13 @@
-DROP TABLE IF EXISTS publishes CASCADE;
-
-CREATE TABLE publishes (
-    id             SERIAL PRIMARY KEY,
-    uid            TEXT UNIQUE          DEFAULT gen_uid('PUB'),
-    project_uid    TEXT        NOT NULL REFERENCES projects (uid) ON DELETE CASCADE,
-    version_uid    TEXT        NOT NULL REFERENCES versions (uid) ON DELETE CASCADE,
-    type           TEXT        NOT NULL,
+CREATE TABLE IF NOT EXISTS publishes (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    uid            TEXT UNIQUE,
+    project_uid    TEXT NOT NULL REFERENCES projects (uid) ON DELETE CASCADE,
+    version_uid    TEXT NOT NULL REFERENCES versions (uid) ON DELETE CASCADE,
+    type           TEXT NOT NULL,
     representation TEXT,
-    path           TEXT        NOT NULL,
-    metadata       JSONB       NOT NULL DEFAULT '{}'::jsonb,
-    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
-    deleted_at     TIMESTAMPTZ
+    path           TEXT NOT NULL,
+    metadata       TEXT NOT NULL DEFAULT '{}',
+    created_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted_at     TEXT
 );
-
-CREATE TRIGGER trg_publishes_updated
-    BEFORE UPDATE ON publishes
-    FOR EACH ROW EXECUTE FUNCTION set_updated_at();

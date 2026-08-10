@@ -1,7 +1,7 @@
 
 from fastapi import HTTPException
 
-from clients.db import db
+from db import db
 from schemas.pipeline.task import TaskCreate, TaskOut, TaskUpdate
 from schemas.response import create_response
 from utils.database import db_lookup

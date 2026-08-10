@@ -3,7 +3,7 @@ import secrets
 
 from api.dependencies.auth import hash_token
 from app.config import ROOT_DIR, settings
-from clients.db import db
+from db import db
 
 DEV_TOKEN_FILE = os.path.join(ROOT_DIR, ".dev_token")
 DEV_KEY_UID = "KEY_DEV"

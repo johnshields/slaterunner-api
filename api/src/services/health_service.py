@@ -3,7 +3,7 @@ from typing import Any
 
 from app.config import settings
 from app.logging_config import get_logger
-from clients.db import db
+from db import db
 
 logger = get_logger()
 

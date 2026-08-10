@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 
-from clients.db import db
+from db import db
 
 
 def db_lookup(table: str, identifier: str, *, name_column: str | None = "name") -> dict:

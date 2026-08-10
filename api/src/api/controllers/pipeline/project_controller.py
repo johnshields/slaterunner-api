@@ -1,7 +1,7 @@
 
 from fastapi import HTTPException
 
-from clients.db import db
+from db import db
 from schemas.pipeline.project import (
     ProjectCreate,
     ProjectOut,

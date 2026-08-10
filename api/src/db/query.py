@@ -1,69 +1,12 @@
 import json
-from datetime import UTC, datetime
-from pathlib import Path
 
-import httpx
-
-from app.config import settings
-from app.logging_config import get_logger
-
-logger = get_logger()
-
-SCHEMA_PATH = Path(__file__).parent.parent / "db" / "schema.sql"
-SEED_PATH = Path(__file__).parent.parent / "db" / "seed.sql"
-SEED_API_KEYS_PATH = Path(__file__).parent.parent / "db" / "seed_api_keys.sql"
+from utils.datetime_helpers import now_utc
 
 # Columns stored as JSON text
 JSON_COLUMNS = {"metadata", "context", "payload"}
 
 # Columns stored as INTEGER but returned as bool
 BOOL_COLUMNS = {"is_admin"}
-
-
-class D1Backend:
-    """Cloudflare D1 executor over the REST API (SQL + params, same contract)."""
-
-    def __init__(self, account_id: str, database_id: str, api_token: str):
-        self._url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/d1/database/{database_id}/query"
-        self._client = httpx.Client(
-            headers={"Authorization": f"Bearer {api_token}"},
-            timeout=30,
-        )
-        logger.info("D1 connected (database %s)", database_id)
-
-    def _post(self, sql: str, params: list | None = None) -> list[dict]:
-        payload: dict = {"sql": sql}
-        if params:
-            payload["params"] = params
-        res = self._client.post(self._url, json=payload)
-        body = res.json()
-        if not body.get("success"):
-            raise RuntimeError(f"D1 query failed: {body.get('errors')}")
-        return body["result"]
-
-    def rows(self, sql: str, params: list) -> list[dict]:
-        result = self._post(sql, params)
-        return result[0].get("results", []) if result else []
-
-    def run(self, sql: str, params: list) -> int | None:
-        result = self._post(sql, params)
-        meta = result[-1].get("meta", {}) if result else {}
-        return meta.get("last_row_id")
-
-    def scalar(self, sql: str, params: list):
-        rows = self.rows(sql, params)
-        if not rows:
-            return None
-        return next(iter(rows[0].values()), None)
-
-    def script(self, sql_text: str):
-        self._post(sql_text)
-
-    def ping(self):
-        self._post("SELECT 1")
-
-    def close(self):
-        self._client.close()
 
 
 class QueryResult:
@@ -178,7 +121,7 @@ class QueryBuilder:
             if k in JSON_COLUMNS and isinstance(v, (dict, list)):
                 out[k] = json.dumps(v)
             elif v == "now()":
-                out[k] = datetime.now(UTC).isoformat()
+                out[k] = now_utc().isoformat()
             elif k in BOOL_COLUMNS and isinstance(v, bool):
                 out[k] = int(v)
             else:
@@ -219,7 +162,7 @@ class QueryBuilder:
 
     def _exec_insert(self) -> QueryResult:
         data = self._serialise(self._insert_data)
-        now = datetime.now(UTC).isoformat()
+        now = now_utc().isoformat()
         data.setdefault("created_at", now)
         data.setdefault("updated_at", now)
 
@@ -234,7 +177,7 @@ class QueryBuilder:
 
     def _exec_update(self) -> QueryResult:
         data = self._serialise(self._update_data)
-        data["updated_at"] = datetime.now(UTC).isoformat()
+        data["updated_at"] = now_utc().isoformat()
 
         where, where_params = self._build_where()
         set_clause = ", ".join(f'"{k}" = ?' for k in data)
@@ -244,50 +187,3 @@ class QueryBuilder:
 
         rows = [self._deserialise(r) for r in self._backend.rows(f'SELECT * FROM "{self._table}"{where}', where_params)]
         return QueryResult(rows)
-
-
-class Database:
-    """Cloudflare D1 database client for slaterunner."""
-
-    def __init__(self):
-        self._backend = None
-
-    def connect(self):
-        if not settings.d1_enabled:
-            raise RuntimeError(
-                "D1 credentials missing — set CF_ACCOUNT_ID, D1_DATABASE_ID and D1_API_TOKEN"
-            )
-        self._backend = D1Backend(settings.CF_ACCOUNT_ID, settings.D1_DATABASE_ID, settings.D1_API_TOKEN)
-
-    def init_schema(self):
-        """Create tables if they do not exist."""
-        if SCHEMA_PATH.exists():
-            self._backend.script(SCHEMA_PATH.read_text())
-            logger.info("database schema initialised")
-
-    def seed(self):
-        """Insert seed data if database is empty."""
-        if self._backend.scalar("SELECT COUNT(*) FROM projects", []) == 0 and SEED_PATH.exists():
-            self._backend.script(SEED_PATH.read_text())
-            logger.info("seed data inserted")
-
-        if SEED_API_KEYS_PATH.exists():
-            self._backend.script(SEED_API_KEYS_PATH.read_text())
-            logger.info("API keys seeded")
-
-    def table(self, name: str) -> QueryBuilder:
-        if not self._backend:
-            raise RuntimeError("Database not connected — call db.connect() first")
-        return QueryBuilder(self._backend, name)
-
-    def ping(self):
-        """Health check."""
-        self._backend.ping()
-
-    def close(self):
-        if self._backend:
-            self._backend.close()
-            self._backend = None
-
-
-db = Database()

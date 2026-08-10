@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from fastapi import FastAPI
 
 from app.config import settings
-from clients.db import db
+from db import db
 
 
 def status_payload(app: FastAPI) -> dict:

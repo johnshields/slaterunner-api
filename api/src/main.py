@@ -19,7 +19,7 @@ from app.middleware import (
     RequestLoggingMiddleware,
     SecurityHeadersMiddleware,
 )
-from clients.db import db
+from db import db
 
 
 @asynccontextmanager

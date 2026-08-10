@@ -1,6 +1,6 @@
 
 from api.controllers.pipeline.task_controller import VERSION_DEFAULT_STATUS
-from clients.db import db
+from db import db
 from schemas.pipeline.version import VersionCreate, VersionOut, VersionUpdate
 from schemas.response import create_response
 from utils.database import db_lookup
