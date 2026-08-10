@@ -1,32 +1,32 @@
 ﻿import re
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ShotOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     uid: str
-    project_uid: Optional[str] = None
+    project_uid: str | None = None
     seq: str
     shot: str
     frame_in: int
     frame_out: int
-    fps: Optional[float] = None
-    colorspace: Optional[str] = None
+    fps: float | None = None
+    colorspace: str | None = None
     created_at: datetime
     updated_at: datetime
 
 
 class ShotCreate(BaseModel):
-    uid: Optional[str] = None
+    uid: str | None = None
     project_uid: str
     seq: str = Field(..., min_length=1, max_length=20)
     shot: str = Field(..., min_length=1, max_length=20)
     frame_in: int = Field(..., ge=0)
     frame_out: int = Field(..., ge=0)
-    fps: Optional[float] = Field(None, ge=1.0, le=120.0)
-    colorspace: Optional[str] = None
+    fps: float | None = Field(None, ge=1.0, le=120.0)
+    colorspace: str | None = None
 
     @field_validator("frame_out")
     def validate_frame_range(cls, v, values):
@@ -42,11 +42,11 @@ class ShotCreate(BaseModel):
 
 
 class ShotUpdate(BaseModel):
-    uid: Optional[str] = None
-    project_uid: Optional[str] = None
-    seq: Optional[str] = None
-    shot: Optional[str] = None
-    frame_in: Optional[int] = None
-    frame_out: Optional[int] = None
-    fps: Optional[float] = None
-    colorspace: Optional[str] = None
+    uid: str | None = None
+    project_uid: str | None = None
+    seq: str | None = None
+    shot: str | None = None
+    frame_in: int | None = None
+    frame_out: int | None = None
+    fps: float | None = None
+    colorspace: str | None = None

@@ -1,9 +1,10 @@
+
 from fastapi import APIRouter, Query
-from typing import Optional
-from schemas.pagination import PaginatedResponse
-from schemas.response import ApiResponse
+
 import api.controllers.pipeline.shot_controller as controller
 import schemas.pipeline.shot as schemas_shot
+from schemas.pagination import PaginatedResponse
+from schemas.response import ApiResponse
 
 router = APIRouter()
 
@@ -28,9 +29,9 @@ def delete_shot(shot_uid: str):
 
 @router.get("/shots", response_model=PaginatedResponse[schemas_shot.ShotOut])
 def get_shots(
-        uid: Optional[str] = None,
-        project_uid: Optional[str] = None,
-        shot: Optional[str] = None,
+        uid: str | None = None,
+        project_uid: str | None = None,
+        shot: str | None = None,
         limit: int = Query(100, ge=1, le=500),
         offset: int = Query(0, ge=0),
         include_deleted: bool = Query(False, description="Include soft-deleted records"),

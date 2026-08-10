@@ -1,6 +1,6 @@
-from typing import Optional
+
 from clients.db import db
-from schemas.pipeline.event import EventOut, EventCreate, EventUpdate
+from schemas.pipeline.event import EventCreate, EventOut, EventUpdate
 from schemas.response import create_response
 from utils.database import db_lookup
 from utils.uid import generate_uid
@@ -8,9 +8,9 @@ from utils.uid import generate_uid
 
 # Get a list of events with optional filtering (excluding soft-deleted)
 def list_events(
-        uid: Optional[str] = None,
-        project_uid: Optional[str] = None,
-        kind: Optional[str] = None,
+        uid: str | None = None,
+        project_uid: str | None = None,
+        kind: str | None = None,
         limit: int = 100,
         offset: int = 0,
         include_deleted: bool = False,

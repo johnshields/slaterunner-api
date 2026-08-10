@@ -1,8 +1,9 @@
-from datetime import datetime, timezone
-from typing import Dict, Any, List
-from clients.db import db
+from datetime import UTC, datetime
+from typing import Any
+
 from app.config import settings
 from app.logging_config import get_logger
+from clients.db import db
 
 logger = get_logger()
 
@@ -11,7 +12,7 @@ class HealthChecker:
     """Comprehensive health check system"""
 
     def __init__(self):
-        self.checks: List[Dict[str, Any]] = []
+        self.checks: list[dict[str, Any]] = []
 
     def add_check(self, name: str, check_func, critical: bool = True):
         self.checks.append({
@@ -20,10 +21,10 @@ class HealthChecker:
             "critical": critical,
         })
 
-    def run_checks(self) -> Dict[str, Any]:
+    def run_checks(self) -> dict[str, Any]:
         results = {
             "status": "healthy",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "version": settings.VERSION,
             "environment": settings.ENVIRONMENT,
             "checks": {},
@@ -52,7 +53,7 @@ class HealthChecker:
         return results
 
 
-def check_database() -> Dict[str, Any]:
+def check_database() -> dict[str, Any]:
     try:
         db.ping()
         return {"connected": True, "engine": "d1"}
@@ -60,13 +61,13 @@ def check_database() -> Dict[str, Any]:
         raise Exception(f"Database check failed: {e}")
 
 
-def check_disk_space() -> Dict[str, Any]:
+def check_disk_space() -> dict[str, Any]:
     import shutil
 
     try:
         logs_path = settings.ROOT_DIR / "logs" if hasattr(settings, "ROOT_DIR") else None
         if logs_path and logs_path.exists():
-            total, used, free = shutil.disk_usage(logs_path)
+            _total, _used, free = shutil.disk_usage(logs_path)
             free_gb = free / (1024 ** 3)
             return {
                 "free_gb": round(free_gb, 2),
@@ -78,7 +79,7 @@ def check_disk_space() -> Dict[str, Any]:
         raise Exception(f"Disk space check failed: {e}")
 
 
-def check_memory() -> Dict[str, Any]:
+def check_memory() -> dict[str, Any]:
     try:
         import psutil
 
@@ -95,7 +96,7 @@ def check_memory() -> Dict[str, Any]:
         raise Exception(f"Memory check failed: {e}")
 
 
-def check_configuration() -> Dict[str, Any]:
+def check_configuration() -> dict[str, Any]:
     try:
         config_status = {
             "database": settings.D1_DATABASE_ID,
@@ -124,5 +125,5 @@ health_checker.add_check("disk_space", check_disk_space, critical=False)
 health_checker.add_check("memory", check_memory, critical=False)
 
 
-def get_health_status() -> Dict[str, Any]:
+def get_health_status() -> dict[str, Any]:
     return health_checker.run_checks()

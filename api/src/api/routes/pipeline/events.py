@@ -1,18 +1,19 @@
+
 from fastapi import APIRouter, Query
-from typing import Optional
-from schemas.pagination import PaginatedResponse
-from schemas.response import ApiResponse
+
 import api.controllers.pipeline.event_controller as controller
 import schemas.pipeline.event as schemas_event
+from schemas.pagination import PaginatedResponse
+from schemas.response import ApiResponse
 
 router = APIRouter()
 
 
 @router.get("/events", response_model=PaginatedResponse[schemas_event.EventOut])
 def get_events(
-        uid: Optional[str] = None,
-        project_uid: Optional[str] = None,
-        kind: Optional[str] = None,
+        uid: str | None = None,
+        project_uid: str | None = None,
+        kind: str | None = None,
         limit: int = Query(100, ge=1, le=500),
         offset: int = Query(0, ge=0),
         include_deleted: bool = Query(False, description="Include soft-deleted records"),

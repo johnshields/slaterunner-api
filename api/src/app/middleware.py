@@ -1,7 +1,8 @@
 import time
-from typing import Dict
-from fastapi import Request, HTTPException
+
+from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
+
 from app.config import settings
 from app.logging_config import get_logger
 
@@ -27,11 +28,11 @@ def _get_client_ip(request: Request) -> str:
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Simple in-memory rate limiting middleware"""
 
-    def __init__(self, app, requests_per_minute: int = None, window_size: int = None):
+    def __init__(self, app, requests_per_minute: int | None = None, window_size: int | None = None):
         super().__init__(app)
         self.requests_per_minute = requests_per_minute or settings.RATE_LIMIT_REQUESTS
         self.window_size = window_size or settings.RATE_LIMIT_WINDOW
-        self.requests: Dict[str, list] = {}
+        self.requests: dict[str, list] = {}
 
     async def dispatch(self, request: Request, call_next):
         # Exclude health check endpoints from rate limiting

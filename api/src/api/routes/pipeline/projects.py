@@ -1,16 +1,17 @@
-from fastapi import APIRouter, Query, HTTPException
-from typing import Optional
-from enums.pipeline.publish_type import PublishType
-from enums.pipeline.representation import Representation
-from enums.pipeline.parent_type import ParentType
-from schemas.pagination import PaginatedResponse
-from schemas.response import ApiResponse
+
+from fastapi import APIRouter, HTTPException, Query
+
 import api.controllers.pipeline.project_controller as controller
 import schemas.pipeline.asset as schemas_asset
 import schemas.pipeline.project as schemas_project
 import schemas.pipeline.publish as schemas_publish
 import schemas.pipeline.shot as schemas_shot
 import schemas.pipeline.task as schemas_task
+from enums.pipeline.parent_type import ParentType
+from enums.pipeline.publish_type import PublishType
+from enums.pipeline.representation import Representation
+from schemas.pagination import PaginatedResponse
+from schemas.response import ApiResponse
 
 router = APIRouter()
 
@@ -35,8 +36,8 @@ def delete_project(identifier: str):
 
 @router.get("/projects", response_model=PaginatedResponse[schemas_project.ProjectOut])
 def get_projects(
-        uid: Optional[str] = None,
-        name: Optional[str] = None,
+        uid: str | None = None,
+        name: str | None = None,
         limit: int = Query(100, ge=1, le=500),
         offset: int = Query(0, ge=0),
         include_deleted: bool = Query(False, description="Include soft-deleted records"),
@@ -64,9 +65,9 @@ def get_project_assets(
 @router.get("/projects/{project_uid}/shots", response_model=PaginatedResponse[schemas_shot.ShotOut])
 def get_project_shots(
         project_uid: str,
-        seq: Optional[str] = None,
-        shot: Optional[str] = None,
-        range: Optional[str] = Query(None, description="Format: start-end (e.g. 100-200)"),
+        seq: str | None = None,
+        shot: str | None = None,
+        range: str | None = Query(None, description="Format: start-end (e.g. 100-200)"),
         limit: int = Query(50, ge=1, le=500),
         offset: int = Query(0, ge=0),
 ):
@@ -80,8 +81,8 @@ def get_project_shots(
 @router.get("/projects/{project_uid}/tasks", response_model=PaginatedResponse[schemas_task.TaskOut])
 def get_project_tasks(
         project_uid: str,
-        parent_type: Optional[ParentType] = Query(None),
-        status: Optional[str] = None,
+        parent_type: ParentType | None = Query(None),
+        status: str | None = None,
         limit: int = Query(50, ge=1, le=500),
         offset: int = Query(0, ge=0),
 ):
@@ -92,8 +93,8 @@ def get_project_tasks(
 @router.get("/projects/{project_uid}/publishes", response_model=PaginatedResponse[schemas_publish.PublishOut])
 def get_project_publishes(
         project_uid: str,
-        type: Optional[PublishType] = Query(None),
-        rep: Optional[Representation] = Query(None),
+        type: PublishType | None = Query(None),
+        rep: Representation | None = Query(None),
         limit: int = Query(50, ge=1, le=500),
         offset: int = Query(0, ge=0),
 ):

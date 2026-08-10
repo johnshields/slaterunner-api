@@ -1,21 +1,23 @@
+from datetime import UTC, datetime
+
 from fastapi import FastAPI
-from datetime import datetime, timezone
+
 from app.config import settings
 from clients.db import db
 
 
 def status_payload(app: FastAPI) -> dict:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     started = getattr(app.state, "started_at", now)
     uptime_seconds = (now - started).total_seconds()
 
     return {
         "ok": True,
-        "service": getattr(app, "title"),
-        "version": getattr(app, "version"),
+        "service": app.title,
+        "version": app.version,
         "api_version": settings.API_VERSION,
         "uptime_seconds": int(uptime_seconds),
-        "message": getattr(app, "description"),
+        "message": app.description,
         "timestamp": now.isoformat(),
     }
 

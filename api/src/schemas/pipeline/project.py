@@ -1,5 +1,5 @@
 ﻿from datetime import datetime
-from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -12,7 +12,7 @@ class ProjectOut(BaseModel):
 
 
 class ProjectCreate(BaseModel):
-    uid: Optional[str] = None
+    uid: str | None = None
     name: str = Field(..., min_length=1, max_length=100)
 
     @field_validator("name")
@@ -23,8 +23,8 @@ class ProjectCreate(BaseModel):
 
 
 class ProjectUpdate(BaseModel):
-    uid: Optional[str] = None
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    uid: str | None = None
+    name: str | None = Field(None, min_length=1, max_length=100)
 
 
 class ProjectCounts(BaseModel):

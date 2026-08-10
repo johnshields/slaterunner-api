@@ -1,11 +1,11 @@
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
 
 from app.config import settings
 from app.logging_config import get_logger
-from datetime import datetime, timezone
 
 logger = get_logger()
 
@@ -178,7 +178,7 @@ class QueryBuilder:
             if k in JSON_COLUMNS and isinstance(v, (dict, list)):
                 out[k] = json.dumps(v)
             elif v == "now()":
-                out[k] = datetime.now(timezone.utc).isoformat()
+                out[k] = datetime.now(UTC).isoformat()
             elif k in BOOL_COLUMNS and isinstance(v, bool):
                 out[k] = int(v)
             else:
@@ -219,7 +219,7 @@ class QueryBuilder:
 
     def _exec_insert(self) -> QueryResult:
         data = self._serialise(self._insert_data)
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         data.setdefault("created_at", now)
         data.setdefault("updated_at", now)
 
@@ -234,10 +234,10 @@ class QueryBuilder:
 
     def _exec_update(self) -> QueryResult:
         data = self._serialise(self._update_data)
-        data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        data["updated_at"] = datetime.now(UTC).isoformat()
 
         where, where_params = self._build_where()
-        set_clause = ", ".join(f'"{k}" = ?' for k in data.keys())
+        set_clause = ", ".join(f'"{k}" = ?' for k in data)
         params = list(data.values()) + where_params
 
         self._backend.run(f'UPDATE "{self._table}" SET {set_clause}{where}', params)

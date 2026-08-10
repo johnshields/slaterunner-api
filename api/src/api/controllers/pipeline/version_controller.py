@@ -1,7 +1,7 @@
-from typing import Optional
+
 from api.controllers.pipeline.task_controller import VERSION_DEFAULT_STATUS
 from clients.db import db
-from schemas.pipeline.version import VersionOut, VersionCreate, VersionUpdate
+from schemas.pipeline.version import VersionCreate, VersionOut, VersionUpdate
 from schemas.response import create_response
 from utils.database import db_lookup
 from utils.uid import generate_uid
@@ -78,12 +78,12 @@ def delete_version(uid: str) -> dict:
 
 # Get a list of all versions, with optional filtering (excluding soft-deleted)
 def list_versions(
-        uid: Optional[str] = None,
-        project_uid: Optional[str] = None,
-        task_uid: Optional[str] = None,
-        vnum: Optional[int] = None,
-        status: Optional[str] = None,
-        created_by: Optional[str] = None,
+        uid: str | None = None,
+        project_uid: str | None = None,
+        task_uid: str | None = None,
+        vnum: int | None = None,
+        status: str | None = None,
+        created_by: str | None = None,
         limit: int = 100,
         offset: int = 0,
         include_deleted: bool = False,

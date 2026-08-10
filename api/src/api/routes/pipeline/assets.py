@@ -1,10 +1,11 @@
-from typing import Optional
+
 from fastapi import APIRouter, Query
-from schemas.pagination import PaginatedResponse
-from schemas.response import ApiResponse
+
 import api.controllers.pipeline.asset_controller as controller
 import schemas.pipeline.asset as schemas_asset
 import schemas.pipeline.task as schemas_task
+from schemas.pagination import PaginatedResponse
+from schemas.response import ApiResponse
 
 router = APIRouter()
 
@@ -29,10 +30,10 @@ def delete_asset(identifier: str):
 
 @router.get("/assets", response_model=PaginatedResponse[schemas_asset.AssetOut])
 def get_assets(
-        uid: Optional[str] = None,
-        project_uid: Optional[str] = None,
-        name: Optional[str] = None,
-        type: Optional[str] = None,
+        uid: str | None = None,
+        project_uid: str | None = None,
+        name: str | None = None,
+        type: str | None = None,
         limit: int = 100,
         offset: int = 0,
         include_deleted: bool = Query(False, description="Include soft-deleted records"),

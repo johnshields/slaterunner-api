@@ -1,33 +1,35 @@
 ﻿from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict
+
 from enums.pipeline.render_job_status import RenderJobStatus
 
 
 class RenderJobOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     uid: str
-    project_uid: Optional[str] = None
-    context: Dict[str, Any]
+    project_uid: str | None = None
+    context: dict[str, Any]
     adapter: str
     status: RenderJobStatus
-    logs: Optional[str] = None
+    logs: str | None = None
     submitted_at: datetime
     created_at: datetime
     updated_at: datetime
 
 
 class RenderJobCreate(BaseModel):
-    uid: Optional[str] = None
+    uid: str | None = None
     project_uid: str
-    context: Dict[str, Any]
+    context: dict[str, Any]
     adapter: str
     status: RenderJobStatus = RenderJobStatus.queued
 
 
 class RenderJobUpdate(BaseModel):
-    uid: Optional[str] = None
-    context: Optional[Dict[str, Any]] = None
-    adapter: Optional[str] = None
-    status: Optional[RenderJobStatus] = None
-    logs: Optional[str] = None
+    uid: str | None = None
+    context: dict[str, Any] | None = None
+    adapter: str | None = None
+    status: RenderJobStatus | None = None
+    logs: str | None = None

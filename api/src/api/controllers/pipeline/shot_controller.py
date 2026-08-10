@@ -1,7 +1,8 @@
+
 from fastapi import HTTPException
-from typing import Optional
+
 from clients.db import db
-from schemas.pipeline.shot import ShotCreate, ShotUpdate, ShotOut
+from schemas.pipeline.shot import ShotCreate, ShotOut, ShotUpdate
 from schemas.response import create_response
 from utils.database import db_lookup
 from utils.uid import generate_uid
@@ -58,9 +59,9 @@ def delete_shot(uid: str) -> dict:
 
 # Get a list of shots, with optional filtering (excluding soft-deleted)
 def list_shots(
-        uid: Optional[str] = None,
-        project_uid: Optional[str] = None,
-        shot: Optional[str] = None,
+        uid: str | None = None,
+        project_uid: str | None = None,
+        shot: str | None = None,
         limit: int = 100,
         offset: int = 0,
         include_deleted: bool = False,

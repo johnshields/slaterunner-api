@@ -1,21 +1,22 @@
+
 from fastapi import APIRouter, Query
-from typing import Optional
-from schemas.pagination import PaginatedResponse
-from schemas.response import ApiResponse
+
 import api.controllers.pipeline.publish_controller as controller
 import schemas.pipeline.publish as schemas_publish
+from schemas.pagination import PaginatedResponse
+from schemas.response import ApiResponse
 
 router = APIRouter()
 
 
 @router.get("/publishes", response_model=PaginatedResponse[schemas_publish.PublishOut])
 def get_publishes(
-        uid: Optional[str] = None,
-        project_uid: Optional[str] = None,
-        version_uid: Optional[str] = None,
-        type: Optional[str] = None,
-        representation: Optional[str] = None,
-        path: Optional[str] = None,
+        uid: str | None = None,
+        project_uid: str | None = None,
+        version_uid: str | None = None,
+        type: str | None = None,
+        representation: str | None = None,
+        path: str | None = None,
         limit: int = Query(100, ge=1, le=500),
         offset: int = Query(0, ge=0),
         include_deleted: bool = Query(False, description="Include soft-deleted records"),

@@ -1,11 +1,12 @@
+from typing import Any
+
 from fastapi import HTTPException
-from typing import Any, Dict, Optional
 
 
 class SlateRunnerException(Exception):
     """Base exception for Slate Runner application"""
 
-    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+    def __init__(self, message: str, details: dict[str, Any] | None = None):
         self.message = message
         self.details = details or {}
         super().__init__(self.message)
@@ -13,38 +14,32 @@ class SlateRunnerException(Exception):
 
 class ValidationError(SlateRunnerException):
     """Raised when input validation fails"""
-    pass
 
 
 class BusinessLogicError(SlateRunnerException):
     """Raised when business logic constraints are violated"""
-    pass
 
 
 class DatabaseError(SlateRunnerException):
     """Raised when database operations fail"""
-    pass
 
 
 class NotFoundError(SlateRunnerException):
     """Raised when a requested resource is not found"""
-    pass
 
 
 class ConflictError(SlateRunnerException):
     """Raised when a resource conflict occurs"""
-    pass
 
 
 class UnauthorizedError(SlateRunnerException):
     """Raised when authorization fails"""
-    pass
 
 
 def create_http_exception(
         status_code: int,
         message: str,
-        details: Optional[Dict[str, Any]] = None
+        details: dict[str, Any] | None = None
 ) -> HTTPException:
     """Create a standardised HTTP exception"""
     return HTTPException(

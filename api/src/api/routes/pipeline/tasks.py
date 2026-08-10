@@ -1,10 +1,11 @@
+
 from fastapi import APIRouter, Query
-from typing import Optional
-from schemas.pagination import PaginatedResponse
-from schemas.response import ApiResponse
+
 import api.controllers.pipeline.task_controller as controller
 import schemas.pipeline.task as schemas_task
 import schemas.pipeline.version as schemas_version
+from schemas.pagination import PaginatedResponse
+from schemas.response import ApiResponse
 
 router = APIRouter()
 
@@ -29,13 +30,13 @@ def delete_task(uid: str):
 
 @router.get("/tasks", response_model=PaginatedResponse[schemas_task.TaskOut])
 def get_tasks(
-        uid: Optional[str] = None,
-        project_uid: Optional[str] = None,
-        parent_type: Optional[str] = None,
-        parent_id: Optional[str] = None,
-        name: Optional[str] = None,
-        assignee: Optional[str] = None,
-        status: Optional[str] = None,
+        uid: str | None = None,
+        project_uid: str | None = None,
+        parent_type: str | None = None,
+        parent_id: str | None = None,
+        name: str | None = None,
+        assignee: str | None = None,
+        status: str | None = None,
         limit: int = Query(100, ge=1, le=500),
         offset: int = Query(0, ge=0),
         include_deleted: bool = Query(False, description="Include soft-deleted records"),

@@ -1,9 +1,10 @@
+
 from fastapi import APIRouter, Query
-from typing import Optional
-from schemas.pagination import PaginatedResponse
-from schemas.response import ApiResponse
+
 import api.controllers.pipeline.version_controller as controller
 import schemas.pipeline.version as schemas_version
+from schemas.pagination import PaginatedResponse
+from schemas.response import ApiResponse
 
 router = APIRouter()
 
@@ -31,12 +32,12 @@ def delete_version(uid: str):
 
 @router.get("/versions", response_model=PaginatedResponse[schemas_version.VersionOut])
 def get_versions(
-        uid: Optional[str] = None,
-        project_uid: Optional[str] = None,
-        task_uid: Optional[str] = None,
-        vnum: Optional[int] = None,
-        status: Optional[str] = None,
-        created_by: Optional[str] = None,
+        uid: str | None = None,
+        project_uid: str | None = None,
+        task_uid: str | None = None,
+        vnum: int | None = None,
+        status: str | None = None,
+        created_by: str | None = None,
         limit: int = Query(100, ge=1, le=500),
         offset: int = Query(0, ge=0),
         include_deleted: bool = Query(False, description="Include soft-deleted records"),

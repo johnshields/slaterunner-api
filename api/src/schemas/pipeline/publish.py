@@ -1,6 +1,7 @@
 ﻿from datetime import datetime
-from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
 from enums.pipeline.publish_type import PublishType
 from enums.pipeline.representation import Representation
 
@@ -8,10 +9,10 @@ from enums.pipeline.representation import Representation
 class PublishOut(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
     uid: str
-    project_uid: Optional[str] = None
-    version_uid: Optional[str] = None
-    type: Optional[PublishType] = None
-    representation: Optional[Representation] = None
+    project_uid: str | None = None
+    version_uid: str | None = None
+    type: PublishType | None = None
+    representation: Representation | None = None
     path: str
     # DB column is "metadata"; exposed as "meta" in the API contract
     meta: dict = Field(validation_alias="metadata")
@@ -20,13 +21,13 @@ class PublishOut(BaseModel):
 
 
 class PublishCreate(BaseModel):
-    uid: Optional[str] = None
+    uid: str | None = None
     project_uid: str
     version_uid: str
     type: PublishType
-    representation: Optional[Representation] = None
+    representation: Representation | None = None
     path: str
-    meta: Optional[dict] = {}
+    meta: dict | None = {}
 
     @field_validator("path")
     def validate_path(cls, v):
@@ -36,8 +37,8 @@ class PublishCreate(BaseModel):
 
 
 class PublishUpdate(BaseModel):
-    uid: Optional[str] = None
-    type: Optional[PublishType] = None
-    representation: Optional[Representation] = None
-    path: Optional[str] = None
-    meta: Optional[dict] = None
+    uid: str | None = None
+    type: PublishType | None = None
+    representation: Representation | None = None
+    path: str | None = None
+    meta: dict | None = None

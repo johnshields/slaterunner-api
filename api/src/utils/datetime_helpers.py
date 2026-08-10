@@ -1,7 +1,7 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 def now_utc() -> datetime:
     """Get current UTC timestamp for consistent datetime handling."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 

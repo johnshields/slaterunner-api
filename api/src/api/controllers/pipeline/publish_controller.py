@@ -1,6 +1,6 @@
-from typing import Optional
+
 from clients.db import db
-from schemas.pipeline.publish import PublishOut, PublishCreate, PublishUpdate
+from schemas.pipeline.publish import PublishCreate, PublishOut, PublishUpdate
 from schemas.response import create_response
 from utils.database import db_lookup
 from utils.uid import generate_uid
@@ -46,12 +46,12 @@ def delete_publish(uid: str) -> dict:
 
 # Get a list of all publishes, with optional filtering (excluding soft-deleted)
 def list_publishes(
-        uid: Optional[str] = None,
-        project_uid: Optional[str] = None,
-        version_uid: Optional[str] = None,
-        type: Optional[str] = None,
-        representation: Optional[str] = None,
-        path: Optional[str] = None,
+        uid: str | None = None,
+        project_uid: str | None = None,
+        version_uid: str | None = None,
+        type: str | None = None,
+        representation: str | None = None,
+        path: str | None = None,
         limit: int = 100,
         offset: int = 0,
         include_deleted: bool = False,

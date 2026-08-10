@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+
 from clients.db import db
 
 

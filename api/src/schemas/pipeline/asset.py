@@ -1,6 +1,7 @@
 ﻿from datetime import datetime
-from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
 from enums.pipeline.asset_type import AssetType
 from utils.validation import normalize_input
 
@@ -8,18 +9,18 @@ from utils.validation import normalize_input
 class AssetOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     uid: str
-    project_uid: Optional[str] = None
+    project_uid: str | None = None
     name: str
-    type: Optional[AssetType]
+    type: AssetType | None
     created_at: datetime
     updated_at: datetime
 
 
 class AssetCreate(BaseModel):
-    uid: Optional[str] = None
+    uid: str | None = None
     project_uid: str
     name: str = Field(..., min_length=1, max_length=100)
-    type: Optional[AssetType] = None
+    type: AssetType | None = None
 
     @field_validator("name")
     def validate_name(cls, v):
@@ -33,10 +34,10 @@ class AssetCreate(BaseModel):
 
 
 class AssetUpdate(BaseModel):
-    uid: Optional[str] = None
-    project_uid: Optional[str] = None
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    type: Optional[AssetType] = None
+    uid: str | None = None
+    project_uid: str | None = None
+    name: str | None = Field(None, min_length=1, max_length=100)
+    type: AssetType | None = None
 
     @field_validator("type", mode="before")
     def normalize_type(cls, v):

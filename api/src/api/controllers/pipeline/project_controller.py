@@ -1,7 +1,13 @@
+
 from fastapi import HTTPException
-from typing import Optional
+
 from clients.db import db
-from schemas.pipeline.project import ProjectOut, ProjectCreate, ProjectUpdate, ProjectOverviewOut
+from schemas.pipeline.project import (
+    ProjectCreate,
+    ProjectOut,
+    ProjectOverviewOut,
+    ProjectUpdate,
+)
 from schemas.response import create_response
 from utils.database import db_lookup
 from utils.uid import generate_uid
@@ -48,8 +54,8 @@ def delete_project(identifier: str) -> dict:
 
 # Get a list of all projects, with optional filtering (excluding soft-deleted)
 def list_projects(
-        uid: Optional[str] = None,
-        name: Optional[str] = None,
+        uid: str | None = None,
+        name: str | None = None,
         limit: int = 100,
         offset: int = 0,
         include_deleted: bool = False,
@@ -124,9 +130,9 @@ def list_project_assets(project_uid: str, limit: int = 50, offset: int = 0):
 # Get all shots in a project, with optional filtering
 def list_project_shots(
         project_uid: str,
-        seq: str = None,
-        shot: str = None,
-        range: str = None,
+        seq: str | None = None,
+        shot: str | None = None,
+        range: str | None = None,
         limit: int = 50,
         offset: int = 0,
 ):
@@ -160,8 +166,8 @@ def list_project_shots(
 # Get all tasks for a project, with optional filters
 def list_project_tasks(
         project_uid: str,
-        parent_type: Optional[str] = None,
-        status: Optional[str] = None,
+        parent_type: str | None = None,
+        status: str | None = None,
         limit: int = 50,
         offset: int = 0,
 ):
@@ -189,8 +195,8 @@ def list_project_tasks(
 # Get all publishes for a project, optionally filtered
 def list_project_publishes(
         project_uid: str,
-        type: str = None,
-        rep: str = None,
+        type: str | None = None,
+        rep: str | None = None,
         limit: int = 50,
         offset: int = 0,
 ):

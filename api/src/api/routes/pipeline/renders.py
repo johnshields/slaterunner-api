@@ -1,19 +1,20 @@
+
 from fastapi import APIRouter, Query
-from typing import Optional
-from schemas.pagination import PaginatedResponse
-from schemas.response import ApiResponse
+
 import api.controllers.pipeline.render_controller as controller
 import schemas.pipeline.render as schemas_render
+from schemas.pagination import PaginatedResponse
+from schemas.response import ApiResponse
 
 router = APIRouter()
 
 
 @router.get("/renders", response_model=PaginatedResponse[schemas_render.RenderJobOut])
 def get_render_jobs(
-        uid: Optional[str] = None,
-        project_uid: Optional[str] = None,
-        adapter: Optional[str] = None,
-        status: Optional[str] = None,
+        uid: str | None = None,
+        project_uid: str | None = None,
+        adapter: str | None = None,
+        status: str | None = None,
         limit: int = Query(100, ge=1, le=500),
         offset: int = Query(0, ge=0),
         include_deleted: bool = Query(False, description="Include soft-deleted records"),

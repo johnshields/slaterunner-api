@@ -1,18 +1,24 @@
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.exceptions import RequestValidationError
-from app.config import settings
-from api.routes.system import router as system_router
+
 from api.routes import router as api_router
+from api.routes.system import router as system_router
+from app.config import settings
+from app.dev_auth import ensure_boot_token, ensure_dev_token
+from app.exceptions import SlateRunnerException, handle_slate_runner_exception
 from app.logging_config import get_logger
-from app.dev_auth import ensure_dev_token, ensure_boot_token
-from app.exceptions import handle_slate_runner_exception, SlateRunnerException
-from app.middleware import RateLimitMiddleware, SecurityHeadersMiddleware, RequestLoggingMiddleware
+from app.middleware import (
+    RateLimitMiddleware,
+    RequestLoggingMiddleware,
+    SecurityHeadersMiddleware,
+)
 from clients.db import db
 
 
@@ -20,7 +26,7 @@ from clients.db import db
 async def lifespan(api: FastAPI):
     logger = get_logger()
 
-    api.state.started_at = datetime.now(timezone.utc)
+    api.state.started_at = datetime.now(UTC)
     api.state.settings = settings
     logger.info("%s booting up...", settings.SERVICE)
 

@@ -1,6 +1,6 @@
-from typing import Optional
+
 from clients.db import db
-from schemas.pipeline.render import RenderJobOut, RenderJobCreate, RenderJobUpdate
+from schemas.pipeline.render import RenderJobCreate, RenderJobOut, RenderJobUpdate
 from schemas.response import create_response
 from utils.database import db_lookup
 from utils.uid import generate_uid
@@ -8,10 +8,10 @@ from utils.uid import generate_uid
 
 # Get a list of render jobs with optional filtering (excluding soft-deleted)
 def list_render_jobs(
-        uid: Optional[str] = None,
-        project_uid: Optional[str] = None,
-        adapter: Optional[str] = None,
-        status: Optional[str] = None,
+        uid: str | None = None,
+        project_uid: str | None = None,
+        adapter: str | None = None,
+        status: str | None = None,
         limit: int = 100,
         offset: int = 0,
         include_deleted: bool = False,

@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Request, Depends, HTTPException, Security
+from fastapi import APIRouter, Depends, HTTPException, Request, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from api.controllers.system.system_controller import status_payload, db_conn
+from api.controllers.system.system_controller import db_conn, status_payload
 from api.dependencies.auth import require_token
 from services.health_service import get_health_status
 

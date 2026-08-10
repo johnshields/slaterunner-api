@@ -1,10 +1,10 @@
-from typing import Optional, Type, TypeVar
 from enum import Enum
+from typing import TypeVar
 
 T = TypeVar("T", bound=Enum)
 
 
-def normalize_input(value: Optional[str], enum_cls: Type[T]) -> Optional[T]:
+def normalize_input(value: str | None, enum_cls: type[T]) -> T | None:
     """Normalize input string to match enum value case-insensitively."""
     if value is None:
         return None

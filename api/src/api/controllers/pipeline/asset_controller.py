@@ -1,7 +1,8 @@
-from typing import Optional
+
 from fastapi import HTTPException
+
 from clients.db import db
-from schemas.pipeline.asset import AssetOut, AssetCreate, AssetUpdate
+from schemas.pipeline.asset import AssetCreate, AssetOut, AssetUpdate
 from schemas.response import create_response
 from utils.database import db_lookup
 from utils.uid import generate_uid
@@ -57,10 +58,10 @@ def delete_asset(identifier: str) -> dict:
 
 # Get a list of all assets, with optional filtering (excluding soft-deleted)
 def list_assets(
-        uid: Optional[str] = None,
-        project_uid: Optional[str] = None,
-        name: Optional[str] = None,
-        type: Optional[str] = None,
+        uid: str | None = None,
+        project_uid: str | None = None,
+        name: str | None = None,
+        type: str | None = None,
         limit: int = 100,
         offset: int = 0,
         include_deleted: bool = False,

@@ -1,7 +1,8 @@
+
 from fastapi import HTTPException
-from typing import Optional
+
 from clients.db import db
-from schemas.pipeline.task import TaskOut, TaskCreate, TaskUpdate
+from schemas.pipeline.task import TaskCreate, TaskOut, TaskUpdate
 from schemas.response import create_response
 from utils.database import db_lookup
 from utils.uid import generate_uid
@@ -62,13 +63,13 @@ def delete_task(uid: str) -> dict:
 
 # Get a list of all tasks, with optional filtering (excluding soft-deleted)
 def list_tasks(
-        uid: Optional[str] = None,
-        project_uid: Optional[str] = None,
-        parent_type: Optional[str] = None,
-        parent_id: Optional[str] = None,
-        name: Optional[str] = None,
-        assignee: Optional[str] = None,
-        status: Optional[str] = None,
+        uid: str | None = None,
+        project_uid: str | None = None,
+        parent_type: str | None = None,
+        parent_id: str | None = None,
+        name: str | None = None,
+        assignee: str | None = None,
+        status: str | None = None,
         limit: int = 100,
         offset: int = 0,
         include_deleted: bool = False,

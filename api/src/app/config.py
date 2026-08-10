@@ -1,8 +1,9 @@
-﻿from pydantic import field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+﻿import os
 from pathlib import Path
-import os
-from typing import Literal, Optional
+from typing import Literal
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_DIR = Path.cwd()
 
@@ -20,18 +21,18 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # Database (Cloudflare D1 — required)
-    CF_ACCOUNT_ID: Optional[str] = None
-    D1_DATABASE_ID: Optional[str] = None
-    D1_API_TOKEN: Optional[str] = None
+    CF_ACCOUNT_ID: str | None = None
+    D1_DATABASE_ID: str | None = None
+    D1_API_TOKEN: str | None = None
 
     # Authentication credentials
     API_USERNAME: str = "admin"
-    API_TOKEN: Optional[str] = "token"
-    SECRET_KEY: Optional[str] = "secret"
+    API_TOKEN: str | None = "token"
+    SECRET_KEY: str | None = "secret"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # Admin token installed on boot when provided (deployment secret)
-    BOOT_TOKEN: Optional[str] = None
+    BOOT_TOKEN: str | None = None
 
     # Cross-origin resource sharing
     CORS_ORIGINS: list[str] = ["*"]
